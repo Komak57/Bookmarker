@@ -60,48 +60,6 @@ function displayEpisodes(domain, url) {
 
             if (episodesArray.length > 0) {
                 episodesArray.forEach(([url, episode, completed]) => {
-                    // const card = document.createElement('a');
-                    // card.className = 'card';
-                    // card.href = episode.url;
-                    // card.target = '_blank'; // Open link in a new tab
-
-                    // const cardContent = document.createElement('div');
-                    // cardContent.className = 'card-link';
-
-                    // const title = document.createElement('div');
-                    // title.className = 'card-title';
-                    // title.textContent = episode.title;
-
-                    // const info = document.createElement('div');
-                    // info.className = 'card-info';
-                    // info.textContent = `Season ${episode.season}, Episode ${episode.episode}, Viewed on: ${new Date(episode.viewedAt).toLocaleString()}`;
-
-                    // cardContent.appendChild(title);
-                    // cardContent.appendChild(info);
-
-                    // const trashIcon = document.createElement('i');
-                    // trashIcon.className = 'fas fa-trash trash-icon';
-
-                    // trashIcon.addEventListener('click', (event) => {
-                    //     event.stopPropagation();
-                    //     event.preventDefault();
-
-                    //     // Remove episode from storage
-                    //     chrome.storage.local.get('episodes', (data) => {
-                    //         const episodes = data.episodes || {};
-                    //         delete episodes[episode.title];
-                    //         chrome.storage.local.set({ episodes }, () => {
-                    //             displayEpisodes(domain); // Re-render the list after deletion
-                    //         });
-                    //     });
-                    // });
-
-                    // card.appendChild(cardContent);
-                    // card.appendChild(trashIcon);
-
-                    // contentDiv.appendChild(card);
-                    //const episodeCard = document.createElement("a");
-
                     const episodeListItem = document.createElement("li");
                     episodeListItem.classList.add("episode-item");
 
@@ -246,15 +204,6 @@ function showTrackEpButton(domain, tabId, url, title) {
         window.location.reload(); // Force full page reload of popup.html
     });
     contentDiv.appendChild(trackButton);
-
-    // const contentDiv = document.getElementById('content');
-    // const trackButton = document.createElement('button');
-    // trackButton.textContent = `Force Add Episode`;
-
-    // trackButton.addEventListener('click', () => {
-    //     chrome.runtime.sendMessage({ action: 'trackEpisode', domain: domain, id: tabId, url: url, title: title });
-    //     window.location.reload(); // Force full page reload of popup.html
-    // });
 
     // contentDiv.appendChild(trackButton);
 

@@ -37,13 +37,6 @@ function loadDomainSettings() {
                     if (settings.obtainTitleFrom == i) opt.selected = true;
                     titleFromSelect.appendChild(opt);
                 }
-                // ["URL", "Tab Text", "Content on Page"].forEach(option => {
-                //     const opt = document.createElement('option');
-                //     opt.value = option;
-                //     opt.textContent = option;
-                //     if (settings.obtainTitleFrom === option) opt.selected = true;
-                //     titleFromSelect.appendChild(opt);
-                // });
                 titleFromSelect.addEventListener('change', () => updateDomainSetting(trackedDomains, domain, 'obtainTitleFrom', parseInt(titleFromSelect.value)));
                 settingsDiv.appendChild(titleFromLabel);
                 settingsDiv.appendChild(titleFromSelect);
@@ -183,22 +176,6 @@ function loadDomainSettings() {
                 extraDiv.appendChild(queryMatchTextarea);
             }
             if (extraDiv.children.length > 0) {
-                // const saveButton = document.createElement('button');
-                // saveButton.textContent = 'Save';
-                // saveButton.addEventListener('click', (event) => {
-                //     event.stopPropagation();
-                //     event.preventDefault();
-
-                //     // Remove domain from tracking
-                //     chrome.storage.local.get('trackedDomains', (data) => {
-                //         const trackedDomains = data.trackedDomains || {};
-                //         delete trackedDomains[domain];
-                //         saveToStorage(trackedDomains);
-                //     });
-
-                //     //chrome.storage.local.set({ trackedDomains: domainList }, displayTrackedDomains);
-                // });
-                // extraDiv.appendChild(saveButton);
                 domainDiv.appendChild(extraDiv);
             }
 
@@ -244,5 +221,4 @@ function saveToStorage(trackedDomains) {
     });
 }
 // Load the list of tracked domains when the page loads
-//document.addEventListener('DOMContentLoaded', displayTrackedDomains);
 document.addEventListener('DOMContentLoaded', loadDomainSettings);
