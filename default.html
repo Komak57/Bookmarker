@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <!-- Add Font Awesome for the trash can icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 10px;
+            width: 405px;
+            background-color: rgb(27, 27, 35);
+            color: rgb(240, 240, 242);
+            border: 0;
+            box-sizing: border-box;
+            color: var(--ink-1);
+            fill: var(--ink-1);
+            font-size: var(--font-size);
+            line-height: 1.5;
+            margin: 0;
+        }
+        
+        #hostname {
+            background-color: rgba(179, 198, 250, 0.15);
+            margin: 0;
+            padding: var(--popup-gap-thin) 0;
+            text-align: center;
+            white-space: normal;
+        }
+        
+        #hostname>span+span {
+            font-weight: 600;
+        }
+        
+        h1 {
+            text-align: center;
+            font-size: 18px;
+        }
+        /* Container for the list */
+        
+        div#content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            padding-left: 1px;
+            padding-right: 1px;
+        }
+        
+        .episodes-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+            max-width: 320px;
+            /* Adjust the max width to fit the popup window size */
+            margin: 0 auto;
+        }
+        /* Style for each episode card */
+        
+        ul#episodesList {
+            margin-top: -3px;
+        }
+        
+        .episode-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: rgb(50 53 67);
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            box-sizing: border-box;
+            position: relative;
+        }
+        /* Title and episode info */
+        
+        .episode-info {
+            flex-grow: 1;
+        }
+        
+        .episode-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            /* color: #333; */
+            color: rgb(121 161 255);
+            /* Limit title size */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-height: 40px;
+        }
+        /* Tooltip style */
+        
+        .tooltip {
+            display: none;
+            /* Hidden by default */
+            position: absolute;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            padding: 5px;
+            border-radius: 5px;
+            top: 50%;
+            /* Position it below the title */
+            left: 50%;
+            transform: translateX(-50%);
+            /* Prevent text wrapping */
+            z-index: 10;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            /* Dissallow titles to expand outside of the card */
+            max-width: 320px;
+        }
+        /* Show the tooltip when hovering */
+        
+        div#tabs {
+            overflow: hidden;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+        
+        .tab {
+            display: inline-block;
+            padding: 10px;
+            cursor: pointer;
+            background-color: rgb(27, 27, 35);
+            margin-right: 10px;
+        }
+        
+        div#tabs div:hover,
+        div#tabs div:hover::after,
+        div#tabs div.active,
+        div#tabs div.active::after {
+            background: #fff;
+            background-image: linear-gradient(to bottom, #5a6182d1, #5a6182);
+        }
+        
+        div#tabs div.active {
+            outline: 0;
+            background-color: darkgray;
+        }
+        
+        div#tabs div {
+            float: left;
+            margin: 0 .5em 0 0;
+            position: relative;
+            background: #323543;
+            background-image: linear-gradient(to bottom, #5a6182, #323543);
+            padding: .7em 3.5em;
+            float: left;
+            text-decoration: none;
+            color: #2e2e2e;
+            text-shadow: 0 1px 0 rgb(0 0 0 / 80%);
+            border-radius: 5px 0 0 0;
+            box-shadow: 0 2px 2px rgba(0, 0, 0, .4);
+        }
+        
+        .episode-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            background-color: #5a6182;
+            position: relative;
+        }
+        
+        .episode-item {
+            padding: 3px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .completed-icon {
+            cursor: pointer;
+        }
+        
+        .episode-card:hover .tooltip {
+            display: block;
+            opacity: 1;
+        }
+        
+        .episode-details {
+            font-size: 12px;
+            /* color: #666; */
+            color: rgb(103 103 103);
+        }
+        
+        .episode-details>span {
+            display: block;
+        }
+        /* Trash can icon for deleting */
+        
+        .delete-icon {
+            color: #ff4d4d;
+            cursor: pointer;
+            padding-left: 10px;
+        }
+        /* Buttons for popup actions */
+        
+        i.fas.fa-trash.trash-icon {
+            color: rgb(255, 0, 0);
+        }
+        
+        i.fas.fa-solid.fa-check {
+            color: rgb(0, 157, 26);
+            padding-right: 10px;
+        }
+        
+        i.fas.fa-solid.fa-star {
+            color: rgb(255, 208, 0);
+            padding-right: 10px;
+        }
+        
+        div#content i {
+            color: white;
+            font-size: xx-large;
+        }
+        
+        #trackButton,
+        #forceAddButton {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        #trackButton:hover,
+        #forceAddButton:hover {
+            background-color: #45a049;
+        }
+        
+        #notification {
+            position: absolute;
+            top: 10px;
+            /* Adjust as needed */
+            right: 10px;
+            /* Adjust as needed */
+            background-color: #f8d7da;
+            /* Light red background */
+            color: #721c24;
+            /* Dark red text */
+            border: 1px solid #f5c6cb;
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 1000;
+            /* Ensure it appears above other elements */
+            display: none;
+            /* Initially hidden */
+            transition: opacity 0.3s ease;
+            /* Fade in/out */
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Notification popup -->
+    <div id="notification" class="hidden"></div>
+    <div id="hostname"></div>
+    <!-- Container for buttons -->
+    <div id="content"></div>
+    <!-- Container for episode list -->
+
+    <div id="tabs" style="display: none;">
+        <div class="tab active" id="episodesList-tab">Watching</div>
+        <div class="tab" id="episodesComplete-tab">Completed</div>
+    </div>
+
+    <ul id="episodesList" class="episode-list"></ul>
+    <ul id="episodesComplete" class="episode-list" style="display: none;"></ul>
+
+    <!-- <div class="episodes-container" id="episodesList"></div> -->
+    <script src="scripts/popup.js"></script>
+</body>
+
+</html>

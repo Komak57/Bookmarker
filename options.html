@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Domain Settings</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 10px;
+            background-color: rgb(27, 27, 35);
+            color: rgb(240, 240, 242);
+            border: 0;
+            box-sizing: border-box;
+            fill: rgb(240, 240, 242);
+            font-size: var(--font-size);
+            line-height: 1.5;
+            margin: 20;
+        }
+        
+        .domain-title {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: block;
+            color: rgb(121 161 255);
+        }
+        
+        .domain-settings {
+            margin-bottom: 20px;
+            display: flex;
+            color: rgb(103 103 103);
+        }
+        
+        .domain-settings h3 {
+            margin-top: 0;
+        }
+        
+        label {
+            display: block;
+            margin: 8px 0;
+        }
+        
+        select,
+        input[type="checkbox"] {
+            margin-right: 10px;
+        }
+        
+        button {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Manage Tracked Domains</h1>
+    <div id="domainList"></div>
+
+    <script src="scripts/options.js"></script>
+</body>
+
+</html>
