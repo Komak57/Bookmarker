@@ -221,5 +221,4 @@ function saveToStorage(trackedDomains) {
     });
 }
 // Load the list of tracked domains when the page loads
-//document.addEventListener('DOMContentLoaded', displayTrackedDomains);
 document.addEventListener('DOMContentLoaded', loadDomainSettings);

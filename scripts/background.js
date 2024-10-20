@@ -215,9 +215,6 @@ function getDocumentContent(settings) {
     return data;
 }
 
-// Call the function to inject the content script (needed to search page for details)
-//injectContentScript();
-
 // Function to display a warning notification
 function showWarningNotification(title, season, episode) {
     const notificationOptions = {

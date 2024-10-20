@@ -60,7 +60,6 @@ function displayEpisodes(domain, url) {
 
             if (episodesArray.length > 0) {
                 episodesArray.forEach(([url, episode, completed]) => {
-
                     const episodeListItem = document.createElement("li");
                     episodeListItem.classList.add("episode-item");
 
@@ -205,6 +204,8 @@ function showTrackEpButton(domain, tabId, url, title) {
         window.location.reload(); // Force full page reload of popup.html
     });
     contentDiv.appendChild(trackButton);
+
+    // contentDiv.appendChild(trackButton);
 
     const sortButton = document.createElement('i');
     sortButton.className = 'fas fa-solid fa-arrow-up-wide-short';
