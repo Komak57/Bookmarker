@@ -44,47 +44,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 });
 
-// Listener for tab updates (i.e., when a page change edits the tab without reloading)
-// chrome.webNavigation.onHistoryStateUpdated.addListener(function(details) {
-//     const domain = getDomainFromUrl(details.url);
-//     console.log(`Domain Page Updated: '${domain}' frameId: ${details.frameId} tabID: ${details.tabId}`);
-//     //if (details.frameId === 0) { // Ensure it's the top-level frame
-//     //const domain = getDomainFromUrl(details.url);
-//     console.log(`Domain Page Updated: ${domain}`);
-//     chrome.tabs.get(details.tabId, function(tab) {
-
-//         // Check if this domain is tracked
-//         chrome.storage.local.get('trackedDomains', (data) => {
-//             const trackedDomains = data.trackedDomains || [];
-
-//             if (domain in trackedDomains) {
-//                 const settings = trackedDomains[domain];
-//                 //settings.obtainTitleFrom = ((trackedDomains[domain].obtainTitleFrom == "URL") ? 1 : ((trackedDomains[domain].obtainTitleFrom == "Tab Text") ? 2 : 3));
-
-//                 // Inject script into the current tab to get document content
-//                 chrome.scripting.executeScript({
-//                     target: { tabId: details.tabId },
-//                     func: getDocumentContent, // The function to be executed in the content script
-//                     args: [settings]
-//                 }, (results) => {
-//                     console.log('Script Injection Complete.');
-//                     if (results) {
-//                         if (results[0]) {
-//                             const documentContent = results[0].result;
-//                             console.log('Document content retrieved. ', documentContent);
-//                             // Handle the retrieved document content here
-//                             // Track the episode from the URL if the domain is being tracked
-//                             addEpisodeToStorage(domain, documentContent, { id: tab.id, url: tab.url, title: tab.title }, settings);
-//                         }
-//                     }
-//                 });
-//                 // addEpisodeToStorage(domain, document, tab, settings);
-//             }
-//         });
-//     });
-//     //}
-// });
-
 function delayExecution(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
