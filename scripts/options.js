@@ -7,7 +7,7 @@ function loadDomainSettings() {
     const domainList = document.getElementById('domainList');
     domainList.innerHTML = ''; // Clear any existing content
 
-    chrome.storage.local.get('trackedDomains', (data) => {
+    chrome.storage.sync.get('trackedDomains', (data) => {
         const trackedDomains = data.trackedDomains || [];
 
 
@@ -130,13 +130,13 @@ function loadDomainSettings() {
                 event.preventDefault();
 
                 // Remove domain from tracking
-                chrome.storage.local.get('trackedDomains', (data) => {
+                chrome.storage.sync.get('trackedDomains', (data) => {
                     const trackedDomains = data.trackedDomains || {};
                     delete trackedDomains[domain];
                     saveToStorage(trackedDomains);
                 });
 
-                //chrome.storage.local.set({ trackedDomains: domainList }, displayTrackedDomains);
+                //chrome.storage.sync.set({ trackedDomains: domainList }, displayTrackedDomains);
             });
             settingsDiv.appendChild(removeButton);
 
@@ -216,7 +216,7 @@ function moveEpisodes(fromDomain, toDomain) {
 function saveToStorage(trackedDomains) {
     console.log('Saving domain settings:', trackedDomains);
     // Implement actual saving logic here using chrome.storage if needed
-    chrome.storage.local.set({ trackedDomains }, () => {
+    chrome.storage.sync.set({ trackedDomains }, () => {
         console.log('Tracked domains updated in storage');
     });
 }
