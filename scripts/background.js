@@ -4,6 +4,90 @@ chrome.runtime.onInstalled.addListener(function(details) {
 
         console.log("Attempting to update outdated variables for v", currentVersion);
         VersionUpdate();
+
+
+        // Save from sync to local
+        chrome.contextMenus.create({
+            id: "exportLocal",
+            title: "Export Data",
+            contexts: ["all"]
+        });
+
+        // Load from local to sync
+        chrome.contextMenus.create({
+            id: "importLocal",
+            title: "Import Data",
+            contexts: ["all"]
+        });
+    }
+});
+
+// Listen for context menu clicks
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+    if (info.menuItemId === "exportLocal") {
+        // Obtain Cloud Data
+        chrome.storage.sync.get('trackedDomains', (data) => {
+            const trackedDomains = data.trackedDomains || [];
+            if (chrome.runtime.lastError) {
+                console.error('Error retrieving Domains from storage.sync:', chrome.runtime.lastError);
+                return;
+            }
+            // Save the data from sync to local storage
+            chrome.storage.local.set({ trackedDomains }, () => {
+                if (chrome.runtime.lastError) {
+                    console.error('Error saving to storage.local:', chrome.runtime.lastError);
+                } else {
+                    console.log('Successfully exported data to storage.local.');
+                }
+            });
+        });
+        chrome.storage.sync.get('episodes', (data) => {
+            const episodes = data.episodes || {};
+            if (chrome.runtime.lastError) {
+                console.error('Error retrieving Episodes from storage.sync:', chrome.runtime.lastError);
+                return;
+            }
+            // Save the data from sync to local storage
+            chrome.storage.local.set({ episodes }, () => {
+                if (chrome.runtime.lastError) {
+                    console.error('Error saving to storage.local:', chrome.runtime.lastError);
+                } else {
+                    console.log('Successfully exported data to storage.local.');
+                }
+            });
+        });
+    } else if (info.menuItemId === "importLocal") {
+        // Obtain Cloud Data
+        chrome.storage.local.get('trackedDomains', (data) => {
+            const trackedDomains = data.trackedDomains || [];
+            if (chrome.runtime.lastError) {
+                console.error('Error retrieving Domains from storage.sync:', chrome.runtime.lastError);
+                return;
+            }
+            // Save the data from sync to local storage
+            chrome.storage.sync.set({ trackedDomains }, () => {
+                if (chrome.runtime.lastError) {
+                    console.error('Error saving to storage.local:', chrome.runtime.lastError);
+                } else {
+                    console.log('Successfully exported data to storage.local.');
+                }
+            });
+        });
+        chrome.storage.local.get('episodes', (data) => {
+            const episodes = data.episodes || {};
+            if (chrome.runtime.lastError) {
+                console.error('Error retrieving Episodes from storage.sync:', chrome.runtime.lastError);
+                return;
+            }
+            // Save the data from sync to local storage
+            chrome.storage.sync.set({ episodes }, () => {
+                if (chrome.runtime.lastError) {
+                    console.error('Error saving to storage.local:', chrome.runtime.lastError);
+                } else {
+                    console.log('Successfully exported data to storage.local.');
+                }
+            });
+        });
     }
 });
 

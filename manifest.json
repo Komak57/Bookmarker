@@ -4,6 +4,7 @@
     "description": "Auto-tracking of manga and anime",
     "version": "1.0",
     "permissions": [
+        "contextMenus",
         "tabs",
         "webNavigation",
         "storage",
