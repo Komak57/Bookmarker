@@ -19,6 +19,13 @@ chrome.runtime.onInstalled.addListener(function(details) {
             title: "Import Data",
             contexts: ["all"]
         });
+        // TODO: Enable when code can store online
+        chrome.contextMenus.update("exportLocal", {
+            enabled: false
+        });
+        chrome.contextMenus.update("importLocal", {
+            enabled: false
+        });
     }
 });
 
@@ -102,7 +109,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'trackEpisode') {
         console.log(`Domain Tracking Requested: ${request.domain}`);
 
-        chrome.storage.sync.get('trackedDomains', (data) => {
+        chrome.storage.local.get('trackedDomains', (data) => {
             const trackedDomains = data.trackedDomains || [];
             const settings = trackedDomains[request.domain];
             //settings.obtainTitleFrom = ((trackedDomains[request.domain].obtainTitleFrom == "URL") ? 1 : ((trackedDomains[request.domain].obtainTitleFrom == "Tab Text") ? 2 : 3));
@@ -135,7 +142,7 @@ function delayExecution(ms) {
 function asyncGetDomains() {
     return new Promise((resolve, reject) => {
         // Load tracked domains
-        chrome.storage.sync.get('trackedDomains', function(data) {
+        chrome.storage.local.get('trackedDomains', function(data) {
             if (chrome.runtime.lastError)
                 reject(chrome.runtime.lastError);
             else
@@ -452,7 +459,7 @@ function addEpisodeToStorage(domain, document, tab, settings) {
         console.log(`Ignored: ${((settings.obtainTitleFrom == 2) ? tab.title : tab.url).trim().toLowerCase()}, no episode data found.`);
         return;
     }
-    chrome.storage.sync.get('episodes', (_data) => {
+    chrome.storage.local.get('episodes', (_data) => {
         const episodes = _data.episodes || {};
 
         // Check if the title already exists in storage
@@ -536,7 +543,7 @@ function addEpisodeToStorage(domain, document, tab, settings) {
         }
 
         // Save the updated episodes list back to storage
-        chrome.storage.sync.set({ episodes });
+        chrome.storage.local.set({ episodes });
         console.log('Episodes saved:', episodes);
     });
 }
@@ -546,7 +553,7 @@ function trackEpisode(domain, document, tab, settings) {
     const data = getDetails(domain, document, tab, settings);
     //const { matched, title, season, episode } = getEpisodeDetails(((settings.obtainTitleFrom == 2) ? tab.title : tab.url).trim().toLowerCase(), settings);
 
-    chrome.storage.sync.get('episodes', (_data) => {
+    chrome.storage.local.get('episodes', (_data) => {
         const episodes = _data.episodes || {};
 
         var isnew = (episodes[data.title]) ? false : true;
@@ -561,7 +568,7 @@ function trackEpisode(domain, document, tab, settings) {
             viewedAt: Date.now() // Track the time it was viewed
         };
         // Save the updated list of episodes
-        chrome.storage.sync.set({ episodes }, () => {
+        chrome.storage.local.set({ episodes }, () => {
             if (isnew) {
                 console.log(`Force Added: ${data.title} - Season ${data.season}, Episode ${data.episode}`);
             } else {
@@ -573,7 +580,7 @@ function trackEpisode(domain, document, tab, settings) {
 }
 // Add domain to the list of tracked domains
 function trackDomain(domain) {
-    chrome.storage.sync.get('trackedDomains', (data) => {
+    chrome.storage.local.get('trackedDomains', (data) => {
         const trackedDomains = data.trackedDomains || [];
         if (!(domain in trackedDomains)) {
             trackedDomains[domain] = {
@@ -587,7 +594,7 @@ function trackDomain(domain) {
                 notifyOnEpisodeSkip: true, // Default setting for 'Notify on Episode Skip'
                 sortBy: 0 // Default setting for 'Sort By'
             };
-            chrome.storage.sync.set({ trackedDomains }, () => {
+            chrome.storage.local.set({ trackedDomains }, () => {
                 console.log(`Domain ${domain} is now being tracked.`);
             });
         }
@@ -600,7 +607,7 @@ const sortBy = ["Last Viewed", "Ascending", "Descending"];
 
 // Version Updater to fix bugs when changes are made
 function VersionUpdate() {
-    chrome.storage.sync.get('trackedDomains', (data) => {
+    chrome.storage.local.get('trackedDomains', (data) => {
         const trackedDomains = data.trackedDomains || [];
         let save = false;
 
@@ -687,14 +694,14 @@ function VersionUpdate() {
 
         if (save) {
             // Implement actual saving logic here using chrome.storage if needed
-            chrome.storage.sync.set({ trackedDomains }, () => {
+            chrome.storage.local.set({ trackedDomains }, () => {
                 console.log('Saved domain settings:', trackedDomains);
             });
         }
 
     });
 
-    chrome.storage.sync.get('episodes', (data) => {
+    chrome.storage.local.get('episodes', (data) => {
         const episodes = data.episodes || {};
         let save = false;
 
@@ -708,7 +715,7 @@ function VersionUpdate() {
 
         if (save) {
             // Implement actual saving logic here using chrome.storage if needed
-            chrome.storage.sync.set({ episodes }, () => {
+            chrome.storage.local.set({ episodes }, () => {
                 console.log('Saved episodes:', episodes);
             });
         }

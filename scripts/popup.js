@@ -29,11 +29,11 @@ episodesCompletedTab.addEventListener('click', switchTab);
 // Display the list of episodes for the current domain as cards
 function displayEpisodes(domain, url) {
 
-    chrome.storage.sync.get('trackedDomains', (data) => {
+    chrome.storage.local.get('trackedDomains', (data) => {
         const trackedDomains = data.trackedDomains || [];
         settings = trackedDomains[domain];
 
-        chrome.storage.sync.get('episodes', (data) => {
+        chrome.storage.local.get('episodes', (data) => {
             const episodes = data.episodes || {};
             const domainEpisodes = Object.values(episodes).filter(ep => ep.domain === domain);
             // Clear any previous content
@@ -97,10 +97,10 @@ function displayEpisodes(domain, url) {
                         event.preventDefault();
 
                         // Remove episode from storage
-                        chrome.storage.sync.get('episodes', (data) => {
+                        chrome.storage.local.get('episodes', (data) => {
                             const episodes = data.episodes || {};
                             delete episodes[episode.title];
-                            chrome.storage.sync.set({ episodes }, () => {
+                            chrome.storage.local.set({ episodes }, () => {
                                 displayEpisodes(domain); // Re-render the list after deletion
                             });
                         });
@@ -117,7 +117,7 @@ function displayEpisodes(domain, url) {
                         event.preventDefault();
 
                         toggleComplete(episodes, episode.title);
-                        chrome.storage.sync.set({ episodes }, () => {
+                        chrome.storage.local.set({ episodes }, () => {
                             displayEpisodes(domain); // Re-render the list after deletion
                         });
                     });
@@ -156,7 +156,7 @@ function toggleComplete(episodes, title) {
     episodes[title].completed = !episodes[title].completed;
 
     // Save updated episode list to storage (for persistence)
-    chrome.storage.sync.set({ episodes }, () => {
+    chrome.storage.local.set({ episodes }, () => {
         console.log(`Episode ${title} set to ${episodes[title].completed? 'completed' : 'incomplete'}.`);
     });
 }
@@ -213,14 +213,14 @@ function showTrackEpButton(domain, tabId, url, title) {
         event.stopPropagation();
         event.preventDefault();
         // Cycle Sort
-        chrome.storage.sync.get('trackedDomains', (data) => {
+        chrome.storage.local.get('trackedDomains', (data) => {
             const trackedDomains = data.trackedDomains || [];
             trackedDomains[domain].sortBy = trackedDomains[domain].sortBy + 1;
             if (trackedDomains[domain].sortBy > 2)
                 trackedDomains[domain].sortBy = 0;
 
             // Implement actual saving logic here using chrome.storage if needed
-            chrome.storage.sync.set({ trackedDomains }, () => {
+            chrome.storage.local.set({ trackedDomains }, () => {
                 console.log(`Sorting cycled to ${trackedDomains[domain].sortBy} for ${domain}`);
             });
             window.location.reload(); // Force full page reload of popup.html
@@ -237,7 +237,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     const subRegex = /^(?:[^.]+\.)?([^.]+\.[^/]+.*$)/i;
     const currentDomain = getDomainFromUrl(currentTab.url).replace(subRegex, "$1");
 
-    chrome.storage.sync.get('trackedDomains', (data) => {
+    chrome.storage.local.get('trackedDomains', (data) => {
         const trackedDomains = data.trackedDomains || [];
         const titleElem = document.getElementById('hostname');
 
