@@ -181,14 +181,57 @@ chrome.tabs.onUpdated.addListener(async(tabId, changeInfo, tab) => {
                             const documentContent = results[0].result;
                             console.log('Current Document content retrieved. ', documentContent);
 
-                            addEpisodeToStorage(domain, documentContent, tab, settings);
+                            const data = getDetails(domain, documentContent, tab, settings);
+
+                            // TODO: Get title from API - https://api.jikan.moe/v4/anime?q=
+                            fetchJikan(data)
+                                .then(ret => {
+                                    if (!ret.json.data[0]) {
+                                        console.error(`JIKAN Data[0] not Found`);
+                                        return;
+                                    }
+                                    const id = ret.json.data[0].mal_id;
+                                    const titles = ret.json.data[0].titles;
+                                    let title = titles[0].title;
+                                    titles.forEach(t => {
+                                        if (t.type == "English")
+                                            title = t.title;
+                                    });
+                                    console.log(`JIKAN Success: ${id} / ${title}`);
+                                    // replace title
+                                    ret.data.title = title;
+                                    addEpisodeToStorage(ret.data, domain, documentContent, tab, settings);
+                                })
+                                .catch(error => console.error(`JIKAN Error: ${error}`));
                         }
                     }
                 });
 
             } else {
                 // If we don't need content from the page, just add it with what we have
-                addEpisodeToStorage(domain, { title: 'ignored', season: 'ignored', episode: 'ignored' }, tab, settings);
+                // addEpisodeToStorage(domain, { title: 'ignored', season: 'ignored', episode: 'ignored' }, tab, settings);
+
+                const data = getDetails(domain, { title: 'ignored', season: 'ignored', episode: 'ignored' }, tab, settings);
+                // TODO: Get title from API - https://api.jikan.moe/v4/anime?q=
+                fetchJikan(data)
+                    .then(ret => {
+                        if (!ret.json.data[0]) {
+                            console.error(`JIKAN Data[0] not Found`);
+                            return;
+                        }
+                        const id = ret.json.data[0].mal_id;
+                        const titles = ret.json.data[0].titles;
+                        let title = titles[0].title;
+                        titles.forEach(t => {
+                            if (t.type == "English")
+                                title = t.title;
+                        });
+                        console.log(`JIKAN Success: ${id} / ${title}`);
+                        // replace title
+                        ret.data.title = title;
+                        addEpisodeToStorage(ret.data, domain, { title: 'ignored', season: 'ignored', episode: 'ignored' }, tab, settings);
+                    })
+                    .catch(error => console.error(`JIKAN Error: ${error}`));
             }
         }
     }
@@ -408,7 +451,6 @@ function getTitleDetails(data, context, settings) {
     cleanPath = cleanPath
         .replace(/[-_/]+/g, ' ')
         .trim();
-    // TODO: Get title from API - https://api.jikan.moe/v4/anime?q=
     // console.log(`Clean Title: '${context}'`);
 
     // Title should be the cleaned path, capitalized
@@ -418,6 +460,27 @@ function getTitleDetails(data, context, settings) {
         .join(' ');
 }
 
+async function fetchJikan(data) {
+    const url = `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(data.title)}&limit=1`;
+    console.log(`Attempting JIKAN API: ${url}`);
+
+    try {
+        const response = await fetch(url); // Await the fetch response
+        console.log('Response status:', response.status); // Should log the status code
+
+        if (response.ok) { // Checks if status is in the range 200-299
+            const json = await response.json(); // Parse JSON if response is successful
+            console.log(`JIKAN: Data Retrieved`);
+            return { data: data, json: json };
+        } else {
+            console.error(`Bad response from JIKAN: ${response.status}`);
+            return { data: data, json: null };
+        }
+    } catch (error) {
+        console.error('Fetch error:', error); // Handle network errors
+        return { data: data, json: null };
+    }
+}
 // Function to extract Season information
 function getSeasonDetails(data, context, settings) {
     // Find the season
@@ -452,8 +515,7 @@ function getEpisodeDetails(data, context, settings) {
 }
 let isWindowCreated = false;
 // Function to add episode to storage
-function addEpisodeToStorage(domain, document, tab, settings) {
-    const data = getDetails(domain, document, tab, settings);
+function addEpisodeToStorage(data, domain, document, tab, settings) {
     // const { matched, title, season, episode } = getEpisodeDetails(((settings.obtainTitleFrom == 2) ? tab.title : new URL(tab.url).pathname).trim().toLowerCase(), settings);
     if (data.episode == 0) {
         console.log(`Ignored: ${((settings.obtainTitleFrom == 2) ? tab.title : tab.url).trim().toLowerCase()}, no episode data found.`);
@@ -464,7 +526,7 @@ function addEpisodeToStorage(domain, document, tab, settings) {
 
         // Check if the title already exists in storage
         if (episodes[data.title]) {
-            if (data.episode == episodes[data.title].episode) {
+            if (data.episode <= episodes[data.title].episode) {
                 console.log(`Episode already watched: ${data.title}. No updates made.`);
             } else if (isEpisodeSequential(data.episode.toString(), episodes[data.title].episode.toString())) {
                 // Update the episode if it is sequential
@@ -553,30 +615,51 @@ function trackEpisode(domain, document, tab, settings) {
     const data = getDetails(domain, document, tab, settings);
     //const { matched, title, season, episode } = getEpisodeDetails(((settings.obtainTitleFrom == 2) ? tab.title : tab.url).trim().toLowerCase(), settings);
 
-    chrome.storage.local.get('episodes', (_data) => {
-        const episodes = _data.episodes || {};
-
-        var isnew = (episodes[data.title]) ? false : true;
-
-        episodes[data.title] = {
-            domain: domain,
-            url: tab.url,
-            title: data.title,
-            season: data.season,
-            episode: data.episode,
-            completed: data.completed,
-            viewedAt: Date.now() // Track the time it was viewed
-        };
-        // Save the updated list of episodes
-        chrome.storage.local.set({ episodes }, () => {
-            if (isnew) {
-                console.log(`Force Added: ${data.title} - Season ${data.season}, Episode ${data.episode}`);
-            } else {
-                console.log(`Force Updated: ${data.title} - Season ${data.season}, Episode ${data.episode}`);
+    // TODO: Get title from API - https://api.jikan.moe/v4/anime?q=
+    fetchJikan(data)
+        .then(ret => {
+            if (!ret.json.data[0]) {
+                console.error(`JIKAN Data[0] not Found`);
+                return;
             }
-            console.log('Episodes after adding:', episodes);
-        });
-    });
+            const id = ret.json.data[0].mal_id;
+            const titles = ret.json.data[0].titles;
+            let title = titles[0].title;
+            titles.forEach(t => {
+                if (t.type == "English")
+                    title = t.title;
+            });
+            console.log(`JIKAN Success: ${id} / ${title}`);
+            // replace title
+            ret.data.title = title;
+
+            chrome.storage.local.get('episodes', (_data) => {
+                const episodes = _data.episodes || {};
+
+                var isnew = (episodes[ret.data.title]) ? false : true;
+
+                episodes[ret.data.title] = {
+                    domain: domain,
+                    url: tab.url,
+                    title: ret.data.title,
+                    season: ret.data.season,
+                    episode: ret.data.episode,
+                    completed: ret.data.completed,
+                    viewedAt: Date.now() // Track the time it was viewed
+                };
+                // Save the updated list of episodes
+                chrome.storage.local.set({ episodes }, () => {
+                    if (isnew) {
+                        console.log(`Force Added: ${ret.data.title} - Season ${ret.data.season}, Episode ${ret.data.episode}`);
+                    } else {
+                        console.log(`Force Updated: ${ret.data.title} - Season ${ret.data.season}, Episode ${ret.data.episode}`);
+                    }
+                    console.log('Episodes after adding:', episodes);
+                });
+            });
+        })
+        .catch(error => console.error(`JIKAN Error: ${error}`));
+
 }
 // Add domain to the list of tracked domains
 function trackDomain(domain) {
