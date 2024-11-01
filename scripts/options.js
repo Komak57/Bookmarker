@@ -113,9 +113,20 @@ function loadDomainSettings() {
                     moveToSelect.appendChild(opt);
                 }
             });
-            moveToSelect.addEventListener('change', () => moveEpisodes(trackedDomains, domain, moveToSelect.value));
+            // moveToSelect.addEventListener('change', () => moveEpisodes(trackedDomains, domain, moveToSelect.value));
             settingsDiv.appendChild(moveToLabel);
             settingsDiv.appendChild(moveToSelect);
+
+            const transferButton = document.createElement('button');
+            transferButton.textContent = 'Remove';
+            transferButton.addEventListener('click', (event) => {
+                event.stopPropagation();
+                event.preventDefault();
+
+                moveEpisodes(trackedDomains, domain, moveToSelect.value);
+                window.location.reload();
+            });
+            settingsDiv.appendChild(transferButton);
 
             const removeButton = document.createElement('button');
             removeButton.textContent = 'Remove';
