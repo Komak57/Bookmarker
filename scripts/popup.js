@@ -39,8 +39,21 @@ async function displayEpisodes(domain, url) {
                 .then((episodes) => {
                     console.log('Filtering Episodes from :', episodes);
                     console.log(`Filtering Episodes for DomainID ${settings.i} `);
+                    let domainEpisodes = [];
+                    switch (settings.c) {
+                        case 2:
+                            // Other is not linked. Filter by domain
+                            domainEpisodes = Object.fromEntries(Object.entries(episodes).filter(([id, ep]) => ep.d === settings.i));
+                            break;
+                        case 1:
+                        case 0:
+                        default:
+                            // Anime or Manga are linked. Filter by matching category
+                            domainEpisodes = Object.fromEntries(Object.entries(episodes).filter(([id, ep]) => ep.c === settings.c));
+                            break;
+                    }
                     // Filter episodes to this domain only
-                    const domainEpisodes = Object.fromEntries(Object.entries(episodes).filter(([id, ep]) => ep.d === settings.i));
+                    // const domainEpisodes = Object.fromEntries(Object.entries(episodes).filter(([id, ep]) => ep.d === settings.i));
                     // const domainEpisodes = Object.values(episodes).filter(ep => ep.d === settings.i);
                     console.log(`${Object.keys(domainEpisodes).length} Episodes to Display:`, domainEpisodes);
                     // Filter episodes to this category only
@@ -80,7 +93,8 @@ async function displayEpisodes(domain, url) {
                             const episodeCard = document.createElement("a");
                             episodeCard.classList.add("episode-card");
                             // episodeCard.onclick = () => { chrome.tabs.create({ url: `${domain}/${episode.l}` }); };
-                            episodeCard.href = `https://${domain}${episode.l.startsWith("/")? "":"/"}${episode.l}`;
+                            const [targetDomain, targetSettings] = Object.entries(Domains).find(([d, s]) => s.i === episode.d);
+                            episodeCard.href = `https://${targetDomain}${episode.l.startsWith("/")? "":"/"}${episode.l}`;
                             // TODO: Setting to load in new tab, or current tab
                             episodeCard.target = '_blank'; // Open link in a new tab
 
