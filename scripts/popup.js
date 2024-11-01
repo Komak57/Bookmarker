@@ -54,16 +54,16 @@ async function displayEpisodes(domain, url) {
                     const episodesArray = Object.entries(domainEpisodes);
 
                     // Sort episodes by `viewedAt` field (assuming it's a valid date string or Date object)
-                    episodesArray.sort((a, b) => {
-                        switch (settings.sortBy) {
+                    episodesArray.sort(([, a], [, b]) => {
+                        switch (settings.s) {
                             case 1:
-                                return a[1].t - b[1].t;
+                                return a.t - b.t;
                             case 2:
-                                return b[1].t - a[1].t;
+                                return b.t - a.t;
                             case 0:
                             default:
-                                const episodeA = new Date(a[1].u);
-                                const episodeB = new Date(b[1].u);
+                                const episodeA = new Date(a.u);
+                                const episodeB = new Date(b.u);
                                 return episodeB - episodeA; // Sort in descending order (most recent first)
                         }
                     });

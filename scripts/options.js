@@ -20,6 +20,38 @@ function loadDomainSettings() {
 
             const settingsDiv = document.createElement('div');
             settingsDiv.classList.add('domain-settings'); {
+                // Create "Category" dropdown
+                const mediaType = document.createElement('label');
+                mediaType.textContent = 'Media Type:';
+                const mediaTypeSelect = document.createElement('select');
+                for (i = 0; i < categories.length; i++) {
+                    const opt = document.createElement('option');
+                    opt.value = i;
+                    opt.textContent = categories[i];
+                    if (settings.c == i) opt.selected = true;
+                    mediaTypeSelect.appendChild(opt);
+                }
+                mediaTypeSelect.addEventListener('change', () => updateDomainSetting(trackedDomains, domain, 'c', parseInt(mediaTypeSelect.value)));
+                settingsDiv.appendChild(mediaType);
+                settingsDiv.appendChild(mediaTypeSelect);
+            }
+
+            // Create "Sort By" dropdown
+            const sortByLabel = document.createElement('label');
+            sortByLabel.textContent = 'Sort By:';
+            const sortBySelect = document.createElement('select');
+            for (i = 0; i < sortBy.length; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = sortBy[i];
+                if (settings.s == i) opt.selected = true;
+                sortBySelect.appendChild(opt);
+            };
+            sortBySelect.addEventListener('change', () => updateDomainSetting(trackedDomains, domain, 's', parseInt(sortBySelect.value)));
+            settingsDiv.appendChild(sortByLabel);
+            settingsDiv.appendChild(sortBySelect);
+
+            {
                 // Create "Obtain Title From" dropdown
                 const titleFromLabel = document.createElement('label');
                 titleFromLabel.textContent = 'Obtain Title From:';
@@ -85,21 +117,6 @@ function loadDomainSettings() {
             settingsDiv.appendChild(notifySkipLabel);
             settingsDiv.appendChild(notifySkipCheckbox);
 
-            // Create "Sort By" dropdown
-            const sortByLabel = document.createElement('label');
-            sortByLabel.textContent = 'Sort By:';
-            const sortBySelect = document.createElement('select');
-            for (i = 0; i < sortBy.length; i++) {
-                const opt = document.createElement('option');
-                opt.value = i;
-                opt.textContent = sortBy[i];
-                if (settings.s == i) opt.selected = true;
-                sortBySelect.appendChild(opt);
-            };
-            sortBySelect.addEventListener('change', () => updateDomainSetting(trackedDomains, domain, 's', parseInt(sortBySelect.value)));
-            settingsDiv.appendChild(sortByLabel);
-            settingsDiv.appendChild(sortBySelect);
-
             // Add "Move To" domain transfer functionality
             const moveToLabel = document.createElement('label');
             moveToLabel.textContent = 'Move Episodes To:';
@@ -118,7 +135,7 @@ function loadDomainSettings() {
             settingsDiv.appendChild(moveToSelect);
 
             const transferButton = document.createElement('button');
-            transferButton.textContent = 'Remove';
+            transferButton.textContent = 'Move All';
             transferButton.addEventListener('click', (event) => {
                 event.stopPropagation();
                 event.preventDefault();
@@ -129,7 +146,7 @@ function loadDomainSettings() {
             settingsDiv.appendChild(transferButton);
 
             const removeButton = document.createElement('button');
-            removeButton.textContent = 'Remove';
+            removeButton.textContent = 'Delete Domain';
             removeButton.addEventListener('click', (event) => {
                 event.stopPropagation();
                 event.preventDefault();
