@@ -1,16 +1,10 @@
-// options.js
-const fromOptions = ["URL", "Tab Text", "Content on Page"];
-const sortBy = ["Last Viewed", "Ascending", "Descending"];
-
 // Function to load domain settings into options.html
 function loadDomainSettings() {
     const domainList = document.getElementById('domainList');
     domainList.innerHTML = ''; // Clear any existing content
 
-    chrome.storage.local.get('trackedDomains', (data) => {
-        const trackedDomains = data.trackedDomains || [];
-
-
+    // const trackedDomains = getDomains();
+    getDomains().then((trackedDomains) => {
         // Loop through each domain and create the settings form
         Object.keys(trackedDomains).forEach(domain => {
             const settings = trackedDomains[domain];
@@ -34,10 +28,10 @@ function loadDomainSettings() {
                     const opt = document.createElement('option');
                     opt.value = i;
                     opt.textContent = fromOptions[i];
-                    if (settings.obtainTitleFrom == i) opt.selected = true;
+                    if (settings.ot == i) opt.selected = true;
                     titleFromSelect.appendChild(opt);
                 }
-                titleFromSelect.addEventListener('change', () => updateDomainSetting(trackedDomains, domain, 'obtainTitleFrom', parseInt(titleFromSelect.value)));
+                titleFromSelect.addEventListener('change', () => updateDomainSetting(trackedDomains, domain, 'ot', parseInt(titleFromSelect.value)));
                 settingsDiv.appendChild(titleFromLabel);
                 settingsDiv.appendChild(titleFromSelect);
             } {
@@ -49,10 +43,10 @@ function loadDomainSettings() {
                     const opt = document.createElement('option');
                     opt.value = i;
                     opt.textContent = fromOptions[i];
-                    if (settings.obtainSeasonFrom == i) opt.selected = true;
+                    if (settings.os == i) opt.selected = true;
                     seasonFromSelect.appendChild(opt);
                 }
-                seasonFromSelect.addEventListener('change', () => updateDomainSetting(trackedDomains, domain, 'obtainSeasonFrom', parseInt(seasonFromSelect.value)));
+                seasonFromSelect.addEventListener('change', () => updateDomainSetting(trackedDomains, domain, 'os', parseInt(seasonFromSelect.value)));
                 settingsDiv.appendChild(seasonFromLabel);
                 settingsDiv.appendChild(seasonFromSelect);
             } {
@@ -64,10 +58,10 @@ function loadDomainSettings() {
                     const opt = document.createElement('option');
                     opt.value = i;
                     opt.textContent = fromOptions[i];
-                    if (settings.obtainEpisodeFrom == i) opt.selected = true;
+                    if (settings.oe == i) opt.selected = true;
                     episodeFromSelect.appendChild(opt);
                 }
-                episodeFromSelect.addEventListener('change', () => updateDomainSetting(trackedDomains, domain, 'obtainEpisodeFrom', parseInt(episodeFromSelect.value)));
+                episodeFromSelect.addEventListener('change', () => updateDomainSetting(trackedDomains, domain, 'oe', parseInt(episodeFromSelect.value)));
                 settingsDiv.appendChild(episodeFromLabel);
                 settingsDiv.appendChild(episodeFromSelect);
             }
@@ -76,8 +70,8 @@ function loadDomainSettings() {
             ignoreEpisodeMatchLabel.textContent = 'Ignore Episode Match:';
             const ignoreEpisodeMatchCheckbox = document.createElement('input');
             ignoreEpisodeMatchCheckbox.type = 'checkbox';
-            ignoreEpisodeMatchCheckbox.checked = settings.ignoreEpisodeMatch;
-            ignoreEpisodeMatchCheckbox.addEventListener('change', () => updateDomainSetting(trackedDomains, domain, 'ignoreEpisodeMatch', ignoreEpisodeMatchCheckbox.checked));
+            ignoreEpisodeMatchCheckbox.checked = settings.ie;
+            ignoreEpisodeMatchCheckbox.addEventListener('change', () => updateDomainSetting(trackedDomains, domain, 'ie', ignoreEpisodeMatchCheckbox.checked));
             settingsDiv.appendChild(ignoreEpisodeMatchLabel);
             settingsDiv.appendChild(ignoreEpisodeMatchCheckbox);
 
@@ -86,8 +80,8 @@ function loadDomainSettings() {
             notifySkipLabel.textContent = 'Notify on Episode Skip:';
             const notifySkipCheckbox = document.createElement('input');
             notifySkipCheckbox.type = 'checkbox';
-            notifySkipCheckbox.checked = settings.notifyOnEpisodeSkip;
-            notifySkipCheckbox.addEventListener('change', () => updateDomainSetting(trackedDomains, domain, 'notifyOnEpisodeSkip', notifySkipCheckbox.checked));
+            notifySkipCheckbox.checked = settings.n;
+            notifySkipCheckbox.addEventListener('change', () => updateDomainSetting(trackedDomains, domain, 'n', notifySkipCheckbox.checked));
             settingsDiv.appendChild(notifySkipLabel);
             settingsDiv.appendChild(notifySkipCheckbox);
 
@@ -99,10 +93,10 @@ function loadDomainSettings() {
                 const opt = document.createElement('option');
                 opt.value = i;
                 opt.textContent = sortBy[i];
-                if (settings.sortBy == i) opt.selected = true;
+                if (settings.s == i) opt.selected = true;
                 sortBySelect.appendChild(opt);
             };
-            sortBySelect.addEventListener('change', () => updateDomainSetting(trackedDomains, domain, 'sortBy', parseInt(sortBySelect.value)));
+            sortBySelect.addEventListener('change', () => updateDomainSetting(trackedDomains, domain, 's', parseInt(sortBySelect.value)));
             settingsDiv.appendChild(sortByLabel);
             settingsDiv.appendChild(sortBySelect);
 
@@ -129,12 +123,15 @@ function loadDomainSettings() {
                 event.stopPropagation();
                 event.preventDefault();
 
-                // Remove domain from tracking
-                chrome.storage.local.get('trackedDomains', (data) => {
-                    const trackedDomains = data.trackedDomains || {};
-                    delete trackedDomains[domain];
-                    saveToStorage(trackedDomains);
-                });
+                delete trackedDomains[domain];
+                saveDomains(trackedDomains);
+                window.location.reload();
+                // // Remove domain from tracking
+                // chrome.storage.local.get('trackedDomains', (data) => {
+                //     const trackedDomains = data.trackedDomains || {};
+                //     delete trackedDomains[domain];
+                //     saveToStorage(trackedDomains);
+                // });
 
                 //chrome.storage.local.set({ trackedDomains: domainList }, displayTrackedDomains);
             });
@@ -145,33 +142,33 @@ function loadDomainSettings() {
             const extraDiv = document.createElement('div');
             extraDiv.classList.add('domain-settings');
 
-            if (settings.obtainTitleFrom == 2) {
+            if (settings.ot == 2) {
                 // Add "HTML Query Match" input
                 const queryMatchLabel = document.createElement('label');
                 queryMatchLabel.textContent = 'Query Title (CSS Selector or Regex):';
                 const queryMatchTextarea = document.createElement('textarea');
-                queryMatchTextarea.value = settings.titleHtmlQueryMatch; // Load existing query or leave blank
-                queryMatchTextarea.addEventListener('input', () => updateDomainSetting(trackedDomains, domain, 'titleHtmlQueryMatch', queryMatchTextarea.value));
+                queryMatchTextarea.value = settings.otm; // Load existing query or leave blank
+                queryMatchTextarea.addEventListener('input', () => updateDomainSetting(trackedDomains, domain, 'otm', queryMatchTextarea.value));
                 extraDiv.appendChild(queryMatchLabel);
                 extraDiv.appendChild(queryMatchTextarea);
             }
-            if (settings.obtainSeasonFrom == 2) {
+            if (settings.os == 2) {
                 // Add "HTML Query Match" input
                 const queryMatchLabel = document.createElement('label');
                 queryMatchLabel.textContent = 'Query Session (CSS Selector or Regex):';
                 const queryMatchTextarea = document.createElement('textarea');
-                queryMatchTextarea.value = settings.seasonHtmlQueryMatch; // Load existing query or leave blank
-                queryMatchTextarea.addEventListener('input', () => updateDomainSetting(trackedDomains, domain, 'seasonHtmlQueryMatch', queryMatchTextarea.value));
+                queryMatchTextarea.value = settings.osm; // Load existing query or leave blank
+                queryMatchTextarea.addEventListener('input', () => updateDomainSetting(trackedDomains, domain, 'osm', queryMatchTextarea.value));
                 extraDiv.appendChild(queryMatchLabel);
                 extraDiv.appendChild(queryMatchTextarea);
             }
-            if (settings.obtainEpisodeFrom == 2) {
+            if (settings.oe == 2) {
                 // Add "HTML Query Match" input
                 const queryMatchLabel = document.createElement('label');
                 queryMatchLabel.textContent = 'Query Episode (CSS Selector or Regex):';
                 const queryMatchTextarea = document.createElement('textarea');
-                queryMatchTextarea.value = settings.episodeHtmlQueryMatch; // Load existing query or leave blank
-                queryMatchTextarea.addEventListener('input', () => updateDomainSetting(trackedDomains, domain, 'episodeHtmlQueryMatch', queryMatchTextarea.value));
+                queryMatchTextarea.value = settings.oem; // Load existing query or leave blank
+                queryMatchTextarea.addEventListener('input', () => updateDomainSetting(trackedDomains, domain, 'oem', queryMatchTextarea.value));
                 extraDiv.appendChild(queryMatchLabel);
                 extraDiv.appendChild(queryMatchTextarea);
             }
@@ -190,12 +187,13 @@ function updateDomainSetting(trackedDomains, domain, settingKey, newValue) {
     console.log(`Updating ${settingKey} to ${newValue}`);
     if (trackedDomains[domain]) {
         trackedDomains[domain][settingKey] = newValue;
-        saveToStorage(trackedDomains);
+        saveDomains(trackedDomains);
+        // saveToStorage(trackedDomains);
     }
     switch (settingKey) {
-        case 'titleHtmlQueryMatch':
-        case 'seasonHtmlQueryMatch':
-        case 'episodeHtmlQueryMatch':
+        case 'otm':
+        case 'osm':
+        case 'oem':
             break;
         default:
             window.location.reload();
@@ -213,12 +211,11 @@ function moveEpisodes(fromDomain, toDomain) {
 }
 
 // Simulate saving to storage (replace with chrome.storage.sync or local if needed)
-function saveToStorage(trackedDomains) {
-    console.log('Saving domain settings:', trackedDomains);
-    // Implement actual saving logic here using chrome.storage if needed
-    chrome.storage.local.set({ trackedDomains }, () => {
-        console.log('Tracked domains updated in storage');
-    });
-}
+// function saveToStorage(trackedDomains) {
+//     console.log('Saving domain settings:', trackedDomains);
+//     // Implement actual saving logic here using chrome.storage if needed
+//     saveDomains(trackedDomains);
+//     console.log('Tracked domains updated in storage');
+// }
 // Load the list of tracked domains when the page loads
 document.addEventListener('DOMContentLoaded', loadDomainSettings);

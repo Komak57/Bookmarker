@@ -1,8 +1,9 @@
-// Function to get domain from URL
-function getDomainFromUrl(url) {
-    const urlObj = new URL(url);
-    return urlObj.hostname.replace('www.', '');
-}
+// Listen for messages in popup.js
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === "reload") {
+        window.location.reload();
+    }
+});
 
 function showNotification(message) {
     const notification = document.getElementById('notification');
@@ -27,138 +28,160 @@ episodesListTab.addEventListener('click', switchTab);
 episodesCompletedTab.addEventListener('click', switchTab);
 
 // Display the list of episodes for the current domain as cards
-function displayEpisodes(domain, url) {
+async function displayEpisodes(domain, url) {
+    // const Domains = getDomains()
+    getDomains()
+        .then((Domains) => {
+            settings = Domains[domain];
 
-    chrome.storage.local.get('trackedDomains', (data) => {
-        const trackedDomains = data.trackedDomains || [];
-        settings = trackedDomains[domain];
+            // const episodes = getEpisodes();
+            getEpisodes()
+                .then((episodes) => {
+                    console.log('Filtering Episodes from :', episodes);
+                    console.log(`Filtering Episodes for DomainID ${settings.i} `);
+                    // Filter episodes to this domain only
+                    const domainEpisodes = Object.fromEntries(Object.entries(episodes).filter(([id, ep]) => ep.d === settings.i));
+                    // const domainEpisodes = Object.values(episodes).filter(ep => ep.d === settings.i);
+                    console.log(`${Object.keys(domainEpisodes).length} Episodes to Display:`, domainEpisodes);
+                    // Filter episodes to this category only
+                    // const domainEpisodes = Object.values(episodes).filter(ep => ep.c === settings.c);
 
-        chrome.storage.local.get('episodes', (data) => {
-            const episodes = data.episodes || {};
-            const domainEpisodes = Object.values(episodes).filter(ep => ep.domain === domain);
-            // Clear any previous content
-            episodesList.innerHTML = '';
-            episodesCompleted.innerHTML = '';
+                    // Clear any previous content
+                    episodesList.innerHTML = '';
+                    episodesCompleted.innerHTML = '';
 
-            // Convert episodes object to an array to sort
-            const episodesArray = Object.entries(domainEpisodes);
+                    // Convert episodes object to an array to sort
+                    const episodesArray = Object.entries(domainEpisodes);
 
-            // Sort episodes by `viewedAt` field (assuming it's a valid date string or Date object)
-            episodesArray.sort((a, b) => {
-                switch (settings.sortBy) {
-                    case 1:
-                        return a[1].title - b[1].title;
-                    case 2:
-                        return b[1].title - a[1].title;
-                    case 0:
-                    default:
-                        const episodeA = new Date(a[1].viewedAt);
-                        const episodeB = new Date(b[1].viewedAt);
-                        return episodeB - episodeA; // Sort in descending order (most recent first)
-                }
-            });
+                    // Sort episodes by `viewedAt` field (assuming it's a valid date string or Date object)
+                    episodesArray.sort((a, b) => {
+                        switch (settings.sortBy) {
+                            case 1:
+                                return a[1].t - b[1].t;
+                            case 2:
+                                return b[1].t - a[1].t;
+                            case 0:
+                            default:
+                                const episodeA = new Date(a[1].u);
+                                const episodeB = new Date(b[1].u);
+                                return episodeB - episodeA; // Sort in descending order (most recent first)
+                        }
+                    });
 
-            if (episodesArray.length > 0) {
-                episodesArray.forEach(([url, episode, completed]) => {
-                    const episodeListItem = document.createElement("li");
-                    episodeListItem.classList.add("episode-item");
+                    if (Object.keys(episodesArray).length > 0) {
+                        // if (episodesArray.length > 0) {
+                        // for (let id in episodesArray) {
+                        //     const episode = episodes[id];
+                        episodesArray.forEach(([id, episode]) => {
+                            console.log('Rendering: ', episode.t);
+                            const episodeListItem = document.createElement("li");
+                            episodeListItem.classList.add("episode-item");
 
-                    const episodeCard = document.createElement("a");
-                    episodeCard.classList.add("episode-card");
-                    episodeCard.onclick = () => { chrome.tabs.create({ url: episode.url }); };
-                    episodeCard.target = '_blank'; // Open link in a new tab
+                            const episodeCard = document.createElement("a");
+                            episodeCard.classList.add("episode-card");
+                            // episodeCard.onclick = () => { chrome.tabs.create({ url: `${domain}/${episode.l}` }); };
+                            episodeCard.href = `${domain}/${episode.l}`;
+                            episodeCard.target = '_blank'; // Open link in a new tab
 
-                    const episodeInfo = document.createElement("div");
-                    episodeInfo.classList.add("episode-info");
+                            const episodeThumbnail = document.createElement("img");
+                            episodeThumbnail.classList.add("episode-thumb");
+                            episodeThumbnail.src = episode.p;
 
-                    const title = document.createElement("div");
-                    title.classList.add("episode-title");
-                    title.textContent = episode.title;
+                            const episodeInfo = document.createElement("div");
+                            episodeInfo.classList.add("episode-info");
 
-                    // Create the tooltip element to show full title on hover
-                    const tooltip = document.createElement("div");
-                    tooltip.classList.add("tooltip");
-                    tooltip.textContent = episode.title; // Full title here
+                            const title = document.createElement("div");
+                            title.classList.add("episode-title");
+                            title.textContent = episode.t;
 
-                    const details = document.createElement("div");
-                    details.classList.add("episode-details");
-                    const det_span1 = document.createElement("span");
-                    det_span1.textContent = `Season ${episode.season}, Episode ${episode.episode}`;
-                    const det_span2 = document.createElement("span");
-                    det_span2.textContent = `Updated ${new Date(episode.viewedAt).toLocaleString()}`;
-                    details.appendChild(det_span1);
-                    details.appendChild(det_span2);
+                            // Create the tooltip element to show full title on hover
+                            const tooltip = document.createElement("div");
+                            tooltip.classList.add("tooltip");
+                            tooltip.textContent = episode.t; // Full title here
 
-                    const trashIcon = document.createElement('i');
-                    trashIcon.className = 'fas fa-trash trash-icon';
+                            const details = document.createElement("div");
+                            details.classList.add("episode-details");
+                            const det_span1 = document.createElement("span");
+                            det_span1.textContent = `Episode ${episode.e} of ${episode.n}`;
+                            const det_span2 = document.createElement("span");
+                            det_span2.textContent = `Updated ${new Date(episode.u).toLocaleString()}`;
+                            details.appendChild(det_span1);
+                            details.appendChild(det_span2);
 
-                    trashIcon.addEventListener('click', (event) => {
-                        event.stopPropagation();
-                        event.preventDefault();
+                            const trashIcon = document.createElement('i');
+                            trashIcon.className = 'fas fa-trash trash-icon';
 
-                        // Remove episode from storage
-                        chrome.storage.local.get('episodes', (data) => {
-                            const episodes = data.episodes || {};
-                            delete episodes[episode.title];
-                            chrome.storage.local.set({ episodes }, () => {
+                            trashIcon.addEventListener('click', (event) => {
+                                event.stopPropagation();
+                                event.preventDefault();
+
+                                delete episodes[id];
+                                saveEpisodes(episodes);
                                 displayEpisodes(domain); // Re-render the list after deletion
+                                // // Remove episode from storage
+                                // chrome.storage.local.get('episodes', (data) => {
+                                //     const episodes = data.episodes || {};
+                                //     delete episodes[episode.t];
+                                //     chrome.storage.local.set({ episodes }, () => {
+                                //         displayEpisodes(domain); // Re-render the list after deletion
+                                //     });
+                                // });
                             });
+
+                            // Add a complete icon (✓)
+                            const completeIcon = document.createElement('i');
+                            completeIcon.className = 'fas fa-solid fa-check';
+                            if (episode.f)
+                                completeIcon.className = 'fas fa-solid fa-star';
+
+                            completeIcon.addEventListener('click', (event) => {
+                                event.stopPropagation();
+                                event.preventDefault();
+
+                                toggleComplete(episodes, id);
+                                saveEpisodes(episodes);
+                                displayEpisodes(domain); // Re-render the list after deletion
+                                // chrome.storage.local.set({ episodes }, () => {
+                                //     displayEpisodes(domain); // Re-render the list after deletion
+                                // });
+                            });
+
+                            // Append the title and details to the info div
+                            episodeInfo.appendChild(title);
+                            if (episode.t && episode.t.length > MAX_TITLE_LENGTH)
+                                episodeCard.appendChild(tooltip); // Tooltip attached to card
+
+                            episodeInfo.appendChild(details);
+
+                            // Append episode info and delete icon to the card
+                            episodeCard.appendChild(episodeThumbnail);
+                            episodeCard.appendChild(episodeInfo);
+                            episodeCard.appendChild(completeIcon);
+                            episodeCard.appendChild(trashIcon);
+
+                            episodeListItem.appendChild(episodeCard);
+                            // Append the card to the list container
+                            if (episode.f)
+                                episodesCompleted.appendChild(episodeListItem);
+                            else
+                                episodesList.appendChild(episodeListItem);
+                            // });
                         });
-                    });
-
-                    // Add a complete icon (✓)
-                    const completeIcon = document.createElement('i');
-                    completeIcon.className = 'fas fa-solid fa-check';
-                    if (episode.completed)
-                        completeIcon.className = 'fas fa-solid fa-star';
-
-                    completeIcon.addEventListener('click', (event) => {
-                        event.stopPropagation();
-                        event.preventDefault();
-
-                        toggleComplete(episodes, episode.title);
-                        chrome.storage.local.set({ episodes }, () => {
-                            displayEpisodes(domain); // Re-render the list after deletion
-                        });
-                    });
-
-                    // Append the title and details to the info div
-                    episodeInfo.appendChild(title);
-                    if (episode.title && episode.title.length > 73)
-                        episodeCard.appendChild(tooltip); // Tooltip attached to card
-
-                    episodeInfo.appendChild(details);
-
-                    // Append episode info and delete icon to the card
-                    episodeCard.appendChild(episodeInfo);
-                    episodeCard.appendChild(completeIcon);
-                    episodeCard.appendChild(trashIcon);
-
-                    episodeListItem.appendChild(episodeCard);
-                    // Append the card to the list container
-                    if (episode.completed)
-                        episodesCompleted.appendChild(episodeListItem);
-                    else
-                        episodesList.appendChild(episodeListItem);
+                    } else {
+                        const noEpisodesMsg = document.createElement('div');
+                        noEpisodesMsg.className = 'no-episodes';
+                        noEpisodesMsg.textContent = 'No episodes tracked yet for this domain.';
+                        episodesList.appendChild(noEpisodesMsg);
+                    }
                 });
-            } else {
-                const noEpisodesMsg = document.createElement('div');
-                noEpisodesMsg.className = 'no-episodes';
-                noEpisodesMsg.textContent = 'No episodes tracked yet for this domain.';
-                episodesList.appendChild(noEpisodesMsg);
-            }
         });
-    });
 }
 
 // Toggle episode complete state
-function toggleComplete(episodes, title) {
-    episodes[title].completed = !episodes[title].completed;
+function toggleComplete(episodes, id) {
+    episodes[id].f = !episodes[id].f;
 
-    // Save updated episode list to storage (for persistence)
-    chrome.storage.local.set({ episodes }, () => {
-        console.log(`Episode ${title} set to ${episodes[title].completed? 'completed' : 'incomplete'}.`);
-    });
+    console.log(`Episode ${episodes[id].t} set to ${episodes[id].f? 'completed' : 'incomplete'}.`);
 }
 
 // Switch between "All Episodes" and "Completed Episodes" tab
@@ -201,7 +224,8 @@ function showTrackEpButton(domain, tabId, url, title) {
         event.preventDefault();
 
         chrome.runtime.sendMessage({ action: 'trackEpisode', domain: domain, id: tabId, url: url, title: title });
-        window.location.reload(); // Force full page reload of popup.html
+        // window.location.reload(); // Force full page reload of popup.html
+        // TODO: listen for background message to reload page
     });
     contentDiv.appendChild(trackButton);
 
@@ -212,20 +236,16 @@ function showTrackEpButton(domain, tabId, url, title) {
     sortButton.addEventListener('click', (event) => {
         event.stopPropagation();
         event.preventDefault();
-        // Cycle Sort
-        chrome.storage.local.get('trackedDomains', (data) => {
-            const trackedDomains = data.trackedDomains || [];
-            trackedDomains[domain].sortBy = trackedDomains[domain].sortBy + 1;
-            if (trackedDomains[domain].sortBy > 2)
-                trackedDomains[domain].sortBy = 0;
+        // const Domains = getDomains();
+        getDomains().then((Domains) => {
+            Domains[domain].s = Domains[domain].s + 1;
+            if (Domains[domain].s >= sortBy.length)
+                Domains[domain].s = 0;
 
-            // Implement actual saving logic here using chrome.storage if needed
-            chrome.storage.local.set({ trackedDomains }, () => {
-                console.log(`Sorting cycled to ${trackedDomains[domain].sortBy} for ${domain}`);
-            });
+            saveDomains(Domains);
+            console.log(`Sorting cycled to ${sortBy[Domains[domain].s]} for ${domain}`);
             window.location.reload(); // Force full page reload of popup.html
         });
-
     });
     contentDiv.appendChild(sortButton);
 
@@ -234,11 +254,10 @@ function showTrackEpButton(domain, tabId, url, title) {
 // Check if the current domain is tracked and display relevant content
 chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     const currentTab = tabs[0];
-    const subRegex = /^(?:[^.]+\.)?([^.]+\.[^/]+.*$)/i;
-    const currentDomain = getDomainFromUrl(currentTab.url).replace(subRegex, "$1");
+    const currentDomain = getDomainFromUrl(currentTab.url);
 
-    chrome.storage.local.get('trackedDomains', (data) => {
-        const trackedDomains = data.trackedDomains || [];
+    // const Domains = getDomains();
+    getDomains().then((Domains) => {
         const titleElem = document.getElementById('hostname');
 
         const spanElem = document.createElement("span");
@@ -247,7 +266,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         titleElem.innerHTML = "";
         titleElem.appendChild(spanElem);
 
-        if (currentDomain.replace(subRegex, "$1") in trackedDomains) {
+        if (Domains && Domains.hasOwnProperty(currentDomain)) {
             const tabs = document.getElementById('tabs');
             tabs.style.display = "block";
             showTrackEpButton(currentDomain, currentTab.id, currentTab.url, currentTab.title);

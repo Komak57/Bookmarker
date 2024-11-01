@@ -1,241 +1,218 @@
+// Import utils.js in background.js
+importScripts('utils.js');
+/* Domain Struct
+    "anitaku.pe":{"i":001,"c":0,"ot":0,"otm":"","os":0,"osm":"","oe":0,"oem":"","ie":0,"n":1,"s":0}
+    string d        -- Domain
+        int i       -- Unique ID
+        int c       -- Category [ Anime, Manga, Other ]
+        int ot      -- Obtain Title From ["URL", "Tab Text", "Content on Page"]
+        string otm  -- String to Match Title by Content
+        int os      -- Obtain Season From ["URL", "Tab Text", "Content on Page"]
+        string osm  -- String to Match Season by Content
+        int oe      -- Obtain Episode From ["URL", "Tab Text", "Content on Page"]
+        string oem  -- String to Match Episode by Content
+        int ie      -- Ignore Episode
+        int n       -- Notify on Episode Skip
+        int s       -- Sort By ["Last Viewed", "Ascending", "Descending"]
+ */
+/* Cloud Struct
+    49458:{"c":0,"d":001,"e":11,"l":"kono-subarashii-sekai-ni-shukufuku-wo-3-episode-11"}
+    int i -- Unique ID
+        int c       -- Category [ Anime, Manga, Other ]
+        int d       -- Last active domain ID
+        int e       -- Active Episode
+        string l    -- Link to URL last viewed (without domain)
+*/
+/* Local Struct
+    49458:{"c":0,"d":001,"f":0,"t":"Kono Subarashii Sekai Ni Shukufuku Wo 3","e":11,"n":11,"p":"https:\/\/cdn.myanimelist.net\/images\/anime\/1758\/141268t.jpg","l":"kono-subarashii-sekai-ni-shukufuku-wo-3-episode-11","u":1.729074538804e+12}}
+    int i -- Unique ID
+        int c       -- Category [ Anime, Manga, Other ]
+        int d       -- Last active domain ID
+        int f       -- Finished watching
+        string t    -- *Title
+        int e       -- Active Episode
+        int n       -- *Current number of Episodes
+        string p    -- *Thumbnail URL
+        string l    -- Link to URL last viewed (without domain)
+        string u    -- last updated
+*/
 chrome.runtime.onInstalled.addListener(function(details) {
     if (details.reason === "update") {
         const currentVersion = chrome.runtime.getManifest().version;
 
-        console.log("Attempting to update outdated variables for v", currentVersion);
+        // Purge all save-data
+        // chrome.storage.local.clear(() => {
+        //     if (chrome.runtime.lastError) {
+        //         console.error("Error clearing chrome.storage.local:", chrome.runtime.lastError);
+        //     } else {
+        //         console.log("All data cleared from chrome.storage.local.");
+        //     }
+        // });
+        // chrome.storage.sync.clear(() => {
+        //     if (chrome.runtime.lastError) {
+        //         console.error("Error clearing chrome.storage.sync:", chrome.runtime.lastError);
+        //     } else {
+        //         console.log("All data cleared from chrome.storage.sync.");
+        //     }
+        // });
         VersionUpdate();
-
-
-        // Save from sync to local
-        chrome.contextMenus.create({
-            id: "exportLocal",
-            title: "Export Data",
-            contexts: ["all"]
-        });
-
-        // Load from local to sync
-        chrome.contextMenus.create({
-            id: "importLocal",
-            title: "Import Data",
-            contexts: ["all"]
-        });
-        // TODO: Enable when code can store online
-        chrome.contextMenus.update("exportLocal", {
-            enabled: false
-        });
-        chrome.contextMenus.update("importLocal", {
-            enabled: false
-        });
-    }
-});
-
-// Listen for context menu clicks
-chrome.contextMenus.onClicked.addListener((info, tab) => {
-    if (info.menuItemId === "exportLocal") {
-        // Obtain Cloud Data
-        chrome.storage.sync.get('trackedDomains', (data) => {
-            const trackedDomains = data.trackedDomains || [];
-            if (chrome.runtime.lastError) {
-                console.error(`Error retrieving Domains from storage.sync; ${chrome.runtime.lastError.name}: ${chrome.runtime.lastError.message}`);
-                return;
-            }
-            // Save the data from sync to local storage
-            chrome.storage.local.set({ trackedDomains }, () => {
-                if (chrome.runtime.lastError) {
-                    console.error(`Error saving to storage.local; ${chrome.runtime.lastError.name}: ${chrome.runtime.lastError.message}`);
-                } else {
-                    console.log('Successfully exported data to storage.local.');
-                }
-            });
-        });
-        chrome.storage.sync.get('episodes', (data) => {
-            const episodes = data.episodes || {};
-            if (chrome.runtime.lastError) {
-                console.error(`Error retrieving Episodes from storage.sync; ${chrome.runtime.lastError.name}: ${chrome.runtime.lastError.message}`);
-                return;
-            }
-            // Save the data from sync to local storage
-            chrome.storage.local.set({ episodes }, () => {
-                if (chrome.runtime.lastError) {
-                    console.error(`Error saving to storage.local; ${chrome.runtime.lastError.name}: ${chrome.runtime.lastError.message}`);
-                } else {
-                    console.log('Successfully exported data to storage.local.');
-                }
-            });
-        });
-    } else if (info.menuItemId === "importLocal") {
-        // Obtain Cloud Data
-        chrome.storage.local.get('trackedDomains', (data) => {
-            const trackedDomains = data.trackedDomains || [];
-            if (chrome.runtime.lastError) {
-                console.error(`Error retrieving Domains from storage.sync; ${chrome.runtime.lastError.name}: ${chrome.runtime.lastError.message}`);
-                return;
-            }
-            // Save the data from sync to local storage
-            chrome.storage.sync.set({ trackedDomains }, () => {
-                if (chrome.runtime.lastError) {
-                    console.error(`Error saving to storage.local; ${chrome.runtime.lastError.name}: ${chrome.runtime.lastError.message}`);
-                } else {
-                    console.log('Successfully exported data to storage.local.');
-                }
-            });
-        });
-        chrome.storage.local.get('episodes', (data) => {
-            const episodes = data.episodes || {};
-            if (chrome.runtime.lastError) {
-                console.error(`Error retrieving Episodes from storage.sync; ${chrome.runtime.lastError.name}: ${chrome.runtime.lastError.message}`);
-                return;
-            }
-            // Save the data from sync to local storage
-            chrome.storage.sync.set({ episodes }, () => {
-                if (chrome.runtime.lastError) {
-                    console.error(`Error saving to storage.local; ${chrome.runtime.lastError.name}: ${chrome.runtime.lastError.message}`);
-                } else {
-                    console.log('Successfully exported data to storage.local.');
-                }
-            });
-        });
     }
 });
 
 // Handle messages from popup.js
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener(async(request, sender, sendResponse) => {
     if (request.action === 'trackDomain') {
         trackDomain(request.domain);
-    }
-});
-// Handle messages from popup.js
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.action === 'trackEpisode') {
+        sendResponse({ status: "success" });
+    } else if (request.action === 'trackEpisode') {
         console.log(`Domain Tracking Requested: ${request.domain}`);
 
-        chrome.storage.local.get('trackedDomains', (data) => {
-            const trackedDomains = data.trackedDomains || [];
-            const settings = trackedDomains[request.domain];
-            //settings.obtainTitleFrom = ((trackedDomains[request.domain].obtainTitleFrom == "URL") ? 1 : ((trackedDomains[request.domain].obtainTitleFrom == "Tab Text") ? 2 : 3));
-
-            // Inject script into the current tab to get document content
-            chrome.scripting.executeScript({
-                target: { tabId: request.id },
-                func: getDocumentContent, // The function to be executed in the content script
-                args: [settings]
-            }, (results) => {
-                console.log('Script Injection Complete.');
-                if (results) {
-                    if (results[0]) {
-                        const documentContent = results[0].result;
-                        console.log('Document content retrieved. ', documentContent);
-
-                        trackEpisode(request.domain, documentContent, { id: request.id, url: request.url, title: request.title }, settings);
-                    }
-                }
-            });
-            sendResponse({ status: "success" });
+        getDomains().then((Domains) => {
+            //const domain = getDomainFromUrl(request.domain);
+            if (Domains.hasOwnProperty(request.domain)) {
+                const settings = Domains[request.domain];
+                settings['forced'] = true;
+                addEpisode(request.domain, settings, { id: request.id, url: request.url, title: request.title });
+            }
         });
     }
 });
 
-function delayExecution(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-function asyncGetDomains() {
-    return new Promise((resolve, reject) => {
-        // Load tracked domains
-        chrome.storage.local.get('trackedDomains', function(data) {
-            if (chrome.runtime.lastError)
-                reject(chrome.runtime.lastError);
-            else
-                resolve(data.trackedDomains || []);
-        });
-    });
-}
 // Listener for tab updates (i.e., when a user navigates to a new page)
 chrome.tabs.onUpdated.addListener(async(tabId, changeInfo, tab) => {
     // console.log(`Domain Page ${changeInfo.status}: ${tab.url}`);
     if (changeInfo.status === 'complete' && tab.url) {
+
         const domain = getDomainFromUrl(tab.url);
         console.log(`Domain Page Loaded: ${domain}`);
-        let trackedDomains = await asyncGetDomains();
-
-        // Check if this domain is tracked
-        if (domain in trackedDomains) {
-            const settings = trackedDomains[domain];
-
-            if (settings.obtainTitleFrom == 2 || settings.obtainSeasonFrom == 2 || settings.obtainEpisodeFrom == 2) {
-                // Wait for dynamic changes to finish (Crunchyroll)
-                await delayExecution(3000);
-                // Get current content
-                chrome.scripting.executeScript({
-                    target: { tabId: tabId },
-                    func: getDocumentContent, // The function to be executed in the content script
-                    args: [settings]
-                }, (results) => {
-                    if (chrome.runtime.lasterror) {
-                        console.error('Script Injection Error: ', chrome.runtime.lastError.message);
-                    } else {
-                        console.log('Script Injection Complete.');
-                    }
-                    if (results) {
-                        if (results[0]) {
-                            const documentContent = results[0].result;
-                            console.log('Current Document content retrieved. ', documentContent);
-
-                            const data = getDetails(domain, documentContent, tab, settings);
-
-                            // TODO: Get title from API - https://api.jikan.moe/v4/anime?q=
-                            fetchJikan(data)
-                                .then(ret => {
-                                    if (!ret.json.data[0]) {
-                                        console.error(`JIKAN Data[0] not Found`);
-                                        return;
-                                    }
-                                    const id = ret.json.data[0].mal_id;
-                                    const titles = ret.json.data[0].titles;
-                                    let title = titles[0].title;
-                                    titles.forEach(t => {
-                                        if (t.type == "English")
-                                            title = t.title;
-                                    });
-                                    console.log(`JIKAN Success: ${id} / ${title}`);
-                                    // replace title
-                                    ret.data.title = title;
-                                    addEpisodeToStorage(ret.data, domain, documentContent, tab, settings);
-                                })
-                                .catch(error => console.error(`JIKAN Error: ${error}`));
-                        }
-                    }
-                });
-
-            } else {
-                // If we don't need content from the page, just add it with what we have
-                // addEpisodeToStorage(domain, { title: 'ignored', season: 'ignored', episode: 'ignored' }, tab, settings);
-
-                const data = getDetails(domain, { title: 'ignored', season: 'ignored', episode: 'ignored' }, tab, settings);
-                // TODO: Get title from API - https://api.jikan.moe/v4/anime?q=
-                fetchJikan(data)
-                    .then(ret => {
-                        if (!ret.json.data[0]) {
-                            console.error(`JIKAN Data[0] not Found`);
-                            return;
-                        }
-                        const id = ret.json.data[0].mal_id;
-                        const titles = ret.json.data[0].titles;
-                        let title = titles[0].title;
-                        titles.forEach(t => {
-                            if (t.type == "English")
-                                title = t.title;
-                        });
-                        console.log(`JIKAN Success: ${id} / ${title}`);
-                        // replace title
-                        ret.data.title = title;
-                        addEpisodeToStorage(ret.data, domain, { title: 'ignored', season: 'ignored', episode: 'ignored' }, tab, settings);
-                    })
-                    .catch(error => console.error(`JIKAN Error: ${error}`));
+        // let Domains = await asyncGetDomains();
+        getDomains().then((Domains) => {
+            // Check if this domain is tracked
+            if (Domains.hasOwnProperty(domain)) {
+                const settings = Domains[domain];
+                addEpisode(domain, settings, tab);
             }
-        }
+        });
     }
 });
+
+async function addEpisode(domain, settings, tab) {
+    if (settings.ot == 2 || settings.os == 2 || settings.oe == 2) {
+        // Wait for dynamic changes to finish (Crunchyroll)
+        await delayExecution(3000);
+        // Get current content
+        chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            func: getDocumentContent, // The function to be executed in the content script
+            args: [settings]
+        }, (results) => {
+            if (chrome.runtime.lasterror) {
+                console.error('Script Injection Error: ', chrome.runtime.lastError.message);
+            } else {
+                console.log('Script Injection Complete.');
+            }
+            if (results) {
+                if (results[0]) {
+                    const documentContent = results[0].result;
+                    console.log('Current Document content retrieved. ', documentContent);
+
+                    const details = getDetails(domain, documentContent, tab, settings);
+
+                    // TODO: Get title from API - https://api.jikan.moe/v4/anime?q=
+                    fetchJikan(details)
+                        .then(ret => {
+                            if (!ret.json.data[0]) {
+                                console.error(`JIKAN Data[0] not Found`);
+                                return;
+                            }
+                            const jikan = {
+                                id: ret.json.data[0].mal_id,
+                                c: 0, // Anime
+                                d: settings.i, // TODO: Get Domain ID
+                                f: 0,
+                                t: details.title,
+                                e: details.episode,
+                                n: ret.json.data[0].episodes,
+                                p: ret.json.data[0].images.jpg.small_image_url, // TODO: Get Thumbnail
+                                l: "tab.url", // URL Last Viewed
+                                u: Date.now() // Track the time it was viewed
+                            };
+                            // Try to get Title from Jikan.
+                            // NOTE: It can be in an array called "Titles", or as a collection of objects called "title(_language?)"
+                            const titles = ret.json.data[0].titles;
+                            if (titles) {
+                                // Check array of titles for english title
+                                let title = titles[0].title;
+                                jikan.t = title[0]; // Default to first-found (usually Default)
+                                titles.forEach(t => {
+                                    if (t.type == "English") // Found english
+                                        jikan.t = t.title;
+                                    // title = t.title;
+                                });
+                                console.log(`JIKAN Success: ${jikan.id} / ${jikan.title}`);
+                            } else {
+                                if (ret.json.data[0].title) // default
+                                    jikan.t = ret.json.data[0].title;
+                                if (ret.json.data[0].title_english) // english
+                                    jikan.t = ret.json.data[0].title_english;
+                            }
+                            // replace title
+                            // ret.data.title = title;
+                            addEpisodeToStorage(jikan, tab, settings);
+                        })
+                        .catch(error => console.error(`JIKAN Error: ${error}`));
+                }
+            }
+        });
+
+    } else {
+        // If we don't need content from the page, just add it with what we have
+        const details = getDetails(domain, { title: 'ignored', season: 'ignored', episode: 'ignored' }, tab, settings);
+        // TODO: Get title from API - https://api.jikan.moe/v4/anime?q=
+        fetchJikan(details)
+            .then(ret => {
+                if (!ret.json.data[0]) {
+                    console.error(`JIKAN Data[0] not Found`);
+                    return;
+                }
+                const jikan = {
+                    id: ret.json.data[0].mal_id,
+                    c: 0, // Anime
+                    d: settings.i, // TODO: Get Domain ID
+                    f: 0,
+                    t: details.title,
+                    e: details.episode,
+                    n: ret.json.data[0].episodes,
+                    p: ret.json.data[0].images.jpg.small_image_url, // TODO: Get Thumbnail
+                    l: "tab.url", // URL Last Viewed
+                    u: Date.now() // Track the time it was viewed
+                };
+                // Try to get Title from Jikan.
+                // NOTE: It can be in an array called "Titles", or as a collection of objects called "title(_language?)"
+                const titles = ret.json.data[0].titles;
+                if (titles) {
+                    // Check array of titles for english title
+                    let title = titles[0].title;
+                    jikan.t = title[0]; // Default to first-found (usually Default)
+                    titles.forEach(t => {
+                        if (t.type == "English") // Found english
+                            jikan.t = t.title;
+                        // title = t.title;
+                    });
+                    console.log(`JIKAN Success: ${jikan.id} / ${jikan.title}`);
+                } else {
+                    if (ret.json.data[0].title) // default
+                        jikan.t = ret.json.data[0].title;
+                    if (ret.json.data[0].title_english) // english
+                        jikan.t = ret.json.data[0].title_english;
+                }
+                // replace title
+                // ret.data.title = title;
+                addEpisodeToStorage(jikan, tab, settings);
+            })
+            .catch(error => console.error(`JIKAN Error: ${error}`));
+    }
+}
 
 // The function that will run in the context of the content script
 function getDocumentContent(settings) {
@@ -248,13 +225,13 @@ function getDocumentContent(settings) {
     console.log('Querying for content.');
     try {
         // Example: Get the inner HTML of the body (you can modify this as needed)
-        if (settings.titleHtmlQueryMatch) {
+        if (settings.otm) {
 
             try {
-                data.title = document.querySelector(settings.titleHtmlQueryMatch).innerText;
+                data.title = document.querySelector(settings.otm).innerText;
             } catch (err) {
                 if (err.name == "SyntaxError") {
-                    const match = document.body.innerHTML.match(new RegExp(settings.titleHtmlQueryMatch, 'i'));
+                    const match = document.body.innerHTML.match(new RegExp(settings.otm, 'i'));
                     if (match)
                         data.title = match[0];
                     else
@@ -266,12 +243,12 @@ function getDocumentContent(settings) {
                 data.title = "Match was Empty";
         }
         // Example: Get the inner HTML of the body (you can modify this as needed)
-        if (settings.seasonHtmlQueryMatch) {
+        if (settings.osm) {
             try {
-                data.season = document.querySelector(settings.seasonHtmlQueryMatch).innerText;
+                data.season = document.querySelector(settings.osm).innerText;
             } catch (err) {
                 if (err.name == "SyntaxError") {
-                    const match = document.body.innerHTML.match(new RegExp(settings.seasonHtmlQueryMatch, 'i'));
+                    const match = document.body.innerHTML.match(new RegExp(settings.osm, 'i'));
                     if (match)
                         data.season = match[0];
                     else
@@ -283,13 +260,13 @@ function getDocumentContent(settings) {
                 data.season = "Match was Empty";
         }
         // Example: Get the inner HTML of the body (you can modify this as needed)
-        if (settings.episodeHtmlQueryMatch) {
+        if (settings.oem) {
             try {
-                data.episode = document.querySelector(settings.episodeHtmlQueryMatch).innerText;
+                data.episode = document.querySelector(settings.oem).innerText;
             } catch (err) {
                 //if (err instanceof SyntaxError)
                 if (err.name == "SyntaxError") {
-                    const match = document.body.innerHTML.match(new RegExp(settings.episodeHtmlQueryMatch, 'i'));
+                    const match = document.body.innerHTML.match(new RegExp(settings.oem, 'i'));
                     if (match)
                         data.episode = match[0];
                     else
@@ -328,48 +305,6 @@ function showWarningNotification(title, season, episode) {
     });
 }
 
-// Function to get domain from URL
-function getDomainFromUrl(url) {
-    const urlObj = new URL(url);
-    const subRegex = /^(?:[^.]+\.)?([^.]+\.[^/]+.*$)/i;
-    return urlObj.hostname.replace(subRegex, "$1");
-}
-
-function normalizeUrl(url) {
-    return url.trim().toLowerCase(); // Normalize URL
-}
-
-// Function to determine if the episode is greater than 1
-function isEpisodeSequential(a, b) {
-    const a_match = String(a).match(/(\d+)([a-z]?)$/);
-    const b_match = String(b).match(/(\d+)([a-z]?)$/);
-
-    const a_ep = parseInt(a_match[1]);
-    const a_sfx = a_match[2];
-
-    const b_ep = parseInt(b_match[1]);
-    const b_sfx = b_match[2];
-
-    // If we had a suffix...
-    if (b_sfx) {
-        // But now we don't...
-        if (b_sfx)
-            return a_ep == b_ep + 1; // Only allow if we incremented the episode
-        // else, only allow sequential letters
-        return a_sfx.charCodeAt(0) == b_sfx.charCodeAt(0);
-    } else {
-        return a_ep == b_ep + 1;
-    }
-}
-
-// Define some regex patterns to identify season and episode
-const yearRegex = /[^a-z0-9]\b([12][90][0-9][0-9])\b[^a-z0-9]/i;
-const seasonRegex_Rigid = /(?:(?:season|s)(\d+)|(\d+)[- ]?(?:th|rd|nd|st)?[- ]?(season|s))/i;
-//const seasonRegex_Soft = /(?:[^\d]|^)(\d+)[- ]?(?:th|nd|st)?[- ]?season(?:[^\d]|$)/i;
-const episodeRegex_Rigid = /(?:episode|ep|e|part|chapter|ch)?[- ]?(\d+[a-z]?)$\b/i;
-const episodeRegex_Simple = /(?:episode|ep|e|part|chapter|ch)[- ]?(\d+[a-z]?)\b/i;
-const episodeRegex_Soft = /\b(\d+[a-z]?)\b/i;
-
 function getDetails(domain, document, tab, settings) {
     let data = {
         matched: false,
@@ -378,27 +313,27 @@ function getDetails(domain, document, tab, settings) {
         completed: false,
         title: null
     }
-    switch (parseInt(settings.obtainSeasonFrom)) {
+    switch (parseInt(settings.os)) {
         case 0:
-            console.log(`Parsing Season from URL`);
+            console.log(`Searching Episode using: '${new URL(tab.url).pathname}'`);
             getSeasonDetails(data, new URL(tab.url).pathname, settings);
             break;
         case 1:
-            console.log(`Parsing Season from Title`);
+            console.log(`Searching Season from Title`);
             getSeasonDetails(data, tab.title.trim(), settings);
             break;
         case 2:
-            console.log(`Parsing Season from Selector`);
+            console.log(`Searching Season from Selector`);
             getSeasonDetails(data, document.season.trim(), settings);
             break;
         default:
-            console.log(`ERROR: obtainSeasonFrom = '${settings.obtainSeasonFrom}'`);
-            settings['obtainSeasonFrom'] = 0;
-            console.log(`Parsing Season from URL`);
+            console.log(`ERROR: obtainSeasonFrom = '${settings.os}'`);
+            settings['os'] = 0;
+            console.log(`Searching Season using: '${new URL(tab.url).pathname}'`);
             getSeasonDetails(data, new URL(tab.url).pathname, settings);
     }
     console.log(`Season Match: '${data.season}'`);
-    switch (parseInt(settings.obtainEpisodeFrom)) {
+    switch (parseInt(settings.oe)) {
         case 0:
             console.log(`Searching Episode using: '${new URL(tab.url).pathname}'`);
             getEpisodeDetails(data, new URL(tab.url).pathname, settings);
@@ -412,29 +347,29 @@ function getDetails(domain, document, tab, settings) {
             getEpisodeDetails(data, document.episode.trim(), settings);
             break;
         default:
-            console.log(`ERROR: obtainEpisodeFrom = '${settings.obtainEpisodeFrom}'`);
-            settings['obtainEpisodeFrom'] = 0;
+            console.log(`ERROR: obtainEpisodeFrom = '${settings.oe}'`);
+            settings['oe'] = 0;
             console.log(`Searching Episode using: '${new URL(tab.url).pathname}'`);
             getEpisodeDetails(data, new URL(tab.url).pathname, settings);
     }
     console.log(`Episode Match: '${data.episode}'`);
-    switch (parseInt(settings.obtainTitleFrom)) {
+    switch (parseInt(settings.ot)) {
         case 0:
-            console.log(`Parsing Title from URL`);
+            console.log(`Searching Title using: '${new URL(tab.url).pathname}'`);
             getTitleDetails(data, new URL(tab.url).pathname, settings);
             break;
         case 1:
-            console.log(`Parsing Title from Title`);
+            console.log(`Searching Title from Title`);
             getTitleDetails(data, tab.title.trim(), settings);
             break;
         case 2:
-            console.log(`Parsing Title from Selector`);
+            console.log(`Searching Title from Selector`);
             getTitleDetails(data, document.title.trim(), settings);
             break;
         default:
-            console.log(`ERROR: obtainTitleFrom = '${settings.obtainTitleFrom}'`);
-            settings['obtainTitleFrom'] = 0;
-            console.log(`Parsing Title from URL`);
+            console.log(`ERROR: obtainTitleFrom = '${settings.ot}'`);
+            settings['ot'] = 0;
+            console.log(`Searching Title from URL`);
             getTitleDetails(data, new URL(tab.url).pathname, settings);
     }
     console.log(`Title Match: '${data.title}'`);
@@ -446,7 +381,7 @@ function getDetails(domain, document, tab, settings) {
 function getTitleDetails(data, context, settings) {
     // console.log(`Title Search: '${context}'`);
     let cleanPath = context;
-    if (settings.obtainTitleFrom == settings.obtainEpisodeFrom)
+    if (settings.ot == settings.oe)
         cleanPath = cleanPath.replace((data.matched == 1 ? episodeRegex_Rigid : (data.matched == 2 ? episodeRegex_Simple : episodeRegex_Soft)), '') // Remove episode from title
     cleanPath = cleanPath
         .replace(/[-_/]+/g, ' ')
@@ -460,8 +395,8 @@ function getTitleDetails(data, context, settings) {
         .join(' ');
 }
 
-async function fetchJikan(data) {
-    const url = `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(data.title)}&limit=1`;
+async function fetchJikan(details) {
+    const url = `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(details.title)}&limit=1`;
     console.log(`Attempting JIKAN API: ${url}`);
 
     try {
@@ -471,14 +406,14 @@ async function fetchJikan(data) {
         if (response.ok) { // Checks if status is in the range 200-299
             const json = await response.json(); // Parse JSON if response is successful
             console.log(`JIKAN: Data Retrieved`);
-            return { data: data, json: json };
+            return { data: details, json: json };
         } else {
             console.error(`Bad response from JIKAN: ${response.status}`);
-            return { data: data, json: null };
+            return { data: details, json: null };
         }
     } catch (error) {
         console.error('Fetch error:', error); // Handle network errors
-        return { data: data, json: null };
+        return { data: details, json: null };
     }
 }
 // Function to extract Season information
@@ -511,296 +446,233 @@ function getEpisodeDetails(data, context, settings) {
         }
     }
     data.matched = eMatch;
-    data.episode = episodeMatch ? parseInt(episodeMatch[1]) : settings.ignoreEpisodeMatch ? 1 : 0;
+    data.episode = episodeMatch ? parseInt(episodeMatch[1]) : settings.ie ? 1 : 0;
 }
 let isWindowCreated = false;
 // Function to add episode to storage
-function addEpisodeToStorage(data, domain, document, tab, settings) {
-    // const { matched, title, season, episode } = getEpisodeDetails(((settings.obtainTitleFrom == 2) ? tab.title : new URL(tab.url).pathname).trim().toLowerCase(), settings);
-    if (data.episode == 0) {
-        console.log(`Ignored: ${((settings.obtainTitleFrom == 2) ? tab.title : tab.url).trim().toLowerCase()}, no episode data found.`);
+function addEpisodeToStorage(jikan, tab, settings) {
+    // If episode didn't match, and we're not allowed to skip
+    if (jikan.episode == 0 && settings.ie == 0) {
+        console.log(`Ignored: ${((settings.ot == 2) ? tab.title : tab.url).trim().toLowerCase()}, no episode data found.`);
         return;
     }
-    chrome.storage.local.get('episodes', (_data) => {
-        const episodes = _data.episodes || {};
+    // const episodes = getEpisodes();
+    getEpisodes()
+        .then((episodes) => {
 
-        // Check if the title already exists in storage
-        if (episodes[data.title]) {
-            if (data.episode <= episodes[data.title].episode) {
-                console.log(`Episode already watched: ${data.title}. No updates made.`);
-            } else if (isEpisodeSequential(data.episode.toString(), episodes[data.title].episode.toString())) {
-                // Update the episode if it is sequential
-                episodes[data.title].url = tab.url; // update URL
-                episodes[data.title].season = data.season; // fix season in case we changed matching parameters
-                episodes[data.title].episode = data.episode;
-                episodes[data.title].completed = false;
-                episodes[data.title].viewedAt = Date.now();
-                console.log(`Updated: ${data.title} - Season ${data.season}, Episode ${data.episode}`);
-            } else {
-                // Notify because the episode is tracked, but watched out of order
-                console.log(`Episode watched out of order for: ${data.title}. No updates made.`);
-                if (settings.notifyOnEpisodeSkip) {
-                    //
-                    // Generate a notification window to warn the user that they may have skipped an episode
-                    //
-                    const episodeUrl = encodeURIComponent(episodes[data.title].url); // encode the original URL
-                    const episodeTitle = encodeURIComponent(episodes[data.title].title); // encode the original URL
-                    const popupWidth = 400;
-                    const popupHeight = 300;
+            // chrome.storage.local.get('episodes', (_data) => {
+            //     const episodes = _data.episodes || {};
 
-                    if (!isWindowCreated) {
-                        isWindowCreated = true;
-                        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-                            const activeTabId = tabs[0].id; // Get the ID of the active tab
+            // Check if the title already exists in storage
+            if (episodes[jikan.id]) {
+                if (jikan.e <= episodes[jikan.id].e) {
+                    console.log(`Episode already watched: ${jikan.id}. No updates made.`);
+                } else if (isEpisodeSequential(jikan.episode.toString(), episodes[jikan.id].episode.toString())) {
+                    // Update the episode if it is sequential
+                    episodes[jikan.id].d = settings.i; // we're changing URL, so we need to change the domain it links to as well
+                    episodes[jikan.id].l = tab.url; // update URL
+                    // episodes[data.title].season = data.season; // fix season in case we changed matching parameters
+                    episodes[jikan.id].e = jikan.e;
+                    episodes[jikan.id].f = jikan.f;
+                    episodes[jikan.id].u = Date.now();
+                    console.log(`Updated: ${jikan.id} - Episode ${jikan.episode}`);
+                } else {
+                    // Notify because the episode is tracked, but watched out of order
+                    console.log(`Episode watched out of order for: ${jikan.id}. No updates made.`);
+                    if (settings.n) {
+                        //
+                        // Generate a notification window to warn the user that they may have skipped an episode
+                        //
+                        const episodeUrl = encodeURIComponent(episodes[jikan.id].l); // encode the original URL
+                        const episodeTitle = encodeURIComponent(episodes[jikan.id].t); // encode the original URL
+                        const popupWidth = 400;
+                        const popupHeight = 300;
 
-                            // Get the current window's dimensions
-                            chrome.windows.getCurrent({ populate: false }, (currentWindow) => {
-                                const windowWidth = currentWindow.width;
-                                const windowHeight = currentWindow.height;
-                                const windowLeft = currentWindow.left;
-                                const windowTop = currentWindow.top;
+                        if (!isWindowCreated) {
+                            isWindowCreated = true;
+                            chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                                const activeTabId = tabs[0].id; // Get the ID of the active tab
 
-                                // Calculate the position for centering the popup
-                                const leftPosition = windowLeft + Math.round((windowWidth - popupWidth) / 2);
-                                const topPosition = windowTop + Math.round((windowHeight - popupHeight) / 2);
+                                // Get the current window's dimensions
+                                chrome.windows.getCurrent({ populate: false }, (currentWindow) => {
+                                    const windowWidth = currentWindow.width;
+                                    const windowHeight = currentWindow.height;
+                                    const windowLeft = currentWindow.left;
+                                    const windowTop = currentWindow.top;
 
-                                // Create the popup window at the calculated position
-                                chrome.windows.create({
-                                    // embed the episode at a _GET variable
-                                    url: chrome.runtime.getURL(`notification.html?title=${episodeTitle}&url=${episodeUrl}&tabId=${activeTabId}`), // Your custom notification page
-                                    type: "popup",
-                                    width: popupWidth,
-                                    height: popupHeight,
-                                    left: leftPosition,
-                                    top: topPosition
-                                }, function(window) {
-                                    // Listen for on-close
-                                    chrome.windows.onRemoved.addListener(function(windowId) {
-                                        if (windowId === window.id) {
-                                            isWindowCreated = false; // Reset the flag when the window is closed
-                                        }
+                                    // Calculate the position for centering the popup
+                                    const leftPosition = windowLeft + Math.round((windowWidth - popupWidth) / 2);
+                                    const topPosition = windowTop + Math.round((windowHeight - popupHeight) / 2);
+
+                                    // Create the popup window at the calculated position
+                                    chrome.windows.create({
+                                        // embed the episode at a _GET variable
+                                        url: chrome.runtime.getURL(`notification.html?title=${episodeTitle}&url=${episodeUrl}&tabId=${activeTabId}`), // Your custom notification page
+                                        type: "popup",
+                                        width: popupWidth,
+                                        height: popupHeight,
+                                        left: leftPosition,
+                                        top: topPosition
+                                    }, function(window) {
+                                        // Listen for on-close
+                                        chrome.windows.onRemoved.addListener(function(windowId) {
+                                            if (windowId === window.id) {
+                                                isWindowCreated = false; // Reset the flag when the window is closed
+                                            }
+                                        });
                                     });
                                 });
                             });
-                        });
+                        }
                     }
                 }
-            }
-        } else {
-            // Add the episode if it is Episode 1
-            if (data.episode === 1 || settings.ignoreEpisodeMatch) {
-                episodes[data.title] = {
-                    domain: domain,
-                    url: tab.url,
-                    title: data.title,
-                    season: data.season,
-                    episode: data.episode,
-                    completed: data.completed,
-                    viewedAt: Date.now() // Track the time it was viewed
-                };
-                console.log(`Tracked: ${data.title} - Season ${data.season}, Episode ${data.episode}`);
             } else {
-                console.log(`Only Episode 1 can be added for new titles. Episode ${data.episode} not tracked.`);
+                // Add the episode if it is Episode 1, or we're ignoring episode match, or we're forcably adding the episode
+                if (jikan.e === 1 || settings.ie || settings.forced) {
+                    //const domainID = Domains[domain].i;
+                    episodes[jikan.id] = {
+                        c: settings.c, // Match Domain Filter
+                        d: settings.i,
+                        f: jikan.f,
+                        t: jikan.t,
+                        e: jikan.e,
+                        n: jikan.n,
+                        p: jikan.p,
+                        l: new URL(tab.url).pathname, // URL Last Viewed
+                        u: Date.now() // Track the time it was viewed
+                    };
+                    console.log(`Tracked: ${jikan.t} - Episode ${jikan.e} of ${jikan.n}`);
+                } else {
+                    // TODO: Handle force-track-episode
+                    console.log(`Only Episode 1 can be added for new titles. Episode ${jikan.e} not tracked.`);
+                }
             }
-        }
 
-        // Save the updated episodes list back to storage
-        chrome.storage.local.set({ episodes });
-        console.log('Episodes saved:', episodes);
-    });
+            // Save the updated episodes list back to storage
+            // chrome.storage.local.set({ episodes });
+            // console.log('Episodes saved:', episodes);
+            saveEpisodes(episodes);
+
+            try {
+                chrome.runtime.sendMessage({ action: "reload" });
+            } catch (err) {
+                console.log(`Could not send reload message: ${err.message}`);
+            }
+            // });
+        });
 }
 
 // Add episode to tracking (forced)
-function trackEpisode(domain, document, tab, settings) {
-    const data = getDetails(domain, document, tab, settings);
-    //const { matched, title, season, episode } = getEpisodeDetails(((settings.obtainTitleFrom == 2) ? tab.title : tab.url).trim().toLowerCase(), settings);
+// function trackEpisode(domain, document, tab, settings) {
+//     const data = getDetails(domain, document, tab, settings);
+//     //const { matched, title, season, episode } = getEpisodeDetails(((settings.obtainTitleFrom == 2) ? tab.title : tab.url).trim().toLowerCase(), settings);
 
-    // TODO: Get title from API - https://api.jikan.moe/v4/anime?q=
-    fetchJikan(data)
-        .then(ret => {
-            if (!ret.json.data[0]) {
-                console.error(`JIKAN Data[0] not Found`);
-                return;
-            }
-            const id = ret.json.data[0].mal_id;
-            const titles = ret.json.data[0].titles;
-            let title = titles[0].title;
-            titles.forEach(t => {
-                if (t.type == "English")
-                    title = t.title;
-            });
-            console.log(`JIKAN Success: ${id} / ${title}`);
-            // replace title
-            ret.data.title = title;
+//     // TODO: Get title from API - https://api.jikan.moe/v4/anime?q=
+//     fetchJikan(data)
+//         .then(ret => {
+//             if (!ret.json.data[0]) {
+//                 console.error(`JIKAN Data[0] not Found`);
+//                 return;
+//             }
+//             const id = ret.json.data[0].mal_id;
+//             const titles = ret.json.data[0].titles;
+//             let title = titles[0].title;
+//             titles.forEach(t => {
+//                 if (t.type == "English")
+//                     title = t.title;
+//             });
+//             console.log(`JIKAN Success: ${id} / ${title}`);
+//             // replace title
+//             ret.data.title = title;
 
-            chrome.storage.local.get('episodes', (_data) => {
-                const episodes = _data.episodes || {};
+//             getEpisodes().then((episodes) => {
 
-                var isnew = (episodes[ret.data.title]) ? false : true;
+//                 var isnew = (episodes[ret.data.title]) ? false : true;
 
-                episodes[ret.data.title] = {
-                    domain: domain,
-                    url: tab.url,
-                    title: ret.data.title,
-                    season: ret.data.season,
-                    episode: ret.data.episode,
-                    completed: ret.data.completed,
-                    viewedAt: Date.now() // Track the time it was viewed
-                };
-                // Save the updated list of episodes
-                chrome.storage.local.set({ episodes }, () => {
-                    if (isnew) {
-                        console.log(`Force Added: ${ret.data.title} - Season ${ret.data.season}, Episode ${ret.data.episode}`);
-                    } else {
-                        console.log(`Force Updated: ${ret.data.title} - Season ${ret.data.season}, Episode ${ret.data.episode}`);
-                    }
-                    console.log('Episodes after adding:', episodes);
-                });
-            });
-        })
-        .catch(error => console.error(`JIKAN Error: ${error}`));
+//                 episodes[ret.data.title] = {
+//                     domain: domain,
+//                     url: tab.url,
+//                     title: ret.data.title,
+//                     season: ret.data.season,
+//                     episode: ret.data.episode,
+//                     completed: ret.data.completed,
+//                     viewedAt: Date.now() // Track the time it was viewed
+//                 };
+//                 saveEpisodes(episodes);
+//                 // Save the updated list of episodes
+//                 // chrome.storage.local.set({ episodes }, () => {
+//                 //     if (isnew) {
+//                 //         console.log(`Force Added: ${ret.data.title} - Season ${ret.data.season}, Episode ${ret.data.episode}`);
+//                 //     } else {
+//                 //         console.log(`Force Updated: ${ret.data.title} - Season ${ret.data.season}, Episode ${ret.data.episode}`);
+//                 //     }
+//                 //     console.log('Episodes after adding:', episodes);
+//                 // });
+//             });
+//         })
+//         .catch(error => console.error(`JIKAN Error: ${error}`));
+// }
 
+// Create an ID 1 incremented from the highest ID in Domains
+function createDomainId(Domains) {
+    let max = 0;
+    for (let domain in Domains) {
+        if (Domains[domain].i > max)
+            max = Domains[domain].i;
+    }
+    // Object.keys(Domains).forEach(domain => {
+    //     if (domain.i > max)
+    //         max = domain.i;
+    // });
+    return max + 1;
 }
+/*
+string d        -- Domain
+    int i       -- Unique ID
+    int c       -- Category [ Anime, Manga, Other ]
+    int ot      -- Obtain Title From ["URL", "Tab Text", "Content on Page"]
+    string otm  -- String to Match Title by Content
+    int os      -- Obtain Season From ["URL", "Tab Text", "Content on Page"]
+    string osm  -- String to Match Season by Content
+    int oe      -- Obtain Episode From ["URL", "Tab Text", "Content on Page"]
+    string oem  -- String to Match Episode by Content
+    int ie      -- Ignore Episode
+    int n       -- Notify on Episode Skip
+    int s       -- Sort By ["Last Viewed", "Ascending", "Descending"]
+    */
 // Add domain to the list of tracked domains
-function trackDomain(domain) {
-    chrome.storage.local.get('trackedDomains', (data) => {
-        const trackedDomains = data.trackedDomains || [];
-        if (!(domain in trackedDomains)) {
-            trackedDomains[domain] = {
-                obtainTitleFrom: 0, // Default setting for 'Obtain Title From'
-                titleHtmlQueryMatch: "", // Default setting for MatchByContent
-                obtainSeasonFrom: 0, // Default setting for 'Obtain Title From'
-                seasonHtmlQueryMatch: "", // Default setting for MatchByContent
-                obtainEpisodeFrom: 0, // Default setting for 'Obtain Title From'
-                episodeHtmlQueryMatch: "", // Default setting for MatchByContent
-                ignoreEpisodeMatch: false, // Default setting for 'Ignore Episode Match'
-                notifyOnEpisodeSkip: true, // Default setting for 'Notify on Episode Skip'
-                sortBy: 0 // Default setting for 'Sort By'
-            };
-            chrome.storage.local.set({ trackedDomains }, () => {
-                console.log(`Domain ${domain} is now being tracked.`);
-            });
-        }
-    });
-}
+async function trackDomain(domain) {
+    // const Domains = getDomains();
+    getDomains()
+        .catch((error) => {
+            console.error(`Failed to get Domains: ${error.name}: ${error.message}`);
+        })
+        .then((Domains) => {
+            // console.log('Domains after Loading:', Domains);
+            // if (!(domain in Domains)) {
+            if (!Domains.hasOwnProperty(domain)) {
+                const uid = createDomainId(Domains);
 
-// options.js
-const fromOptions = ["URL", "Tab Text", "Content on Page"];
-const sortBy = ["Last Viewed", "Ascending", "Descending"];
-
-// Version Updater to fix bugs when changes are made
-function VersionUpdate() {
-    chrome.storage.local.get('trackedDomains', (data) => {
-        const trackedDomains = data.trackedDomains || [];
-        let save = false;
-
-        // Check if data is a normal Array
-        if (Array.isArray(trackedDomains)) {
-            console.log("TrackedDomains is outdated. Converting to an object.");
-
-            // Convert array to an object with default settings
-            let newTrackedDomains = {};
-            trackedDomains.forEach(domain => {
-                newTrackedDomains[domain] = {
-                    obtainTitleFrom: 0, // Default setting for 'Obtain Title From'
-                    titleHtmlQueryMatch: "", // Default setting for MatchByContent
-                    obtainSeasonFrom: 0, // Default setting for 'Obtain Title From'
-                    seasonHtmlQueryMatch: "", // Default setting for MatchByContent
-                    obtainEpisodeFrom: 0, // Default setting for 'Obtain Title From'
-                    episodeHtmlQueryMatch: "", // Default setting for MatchByContent
-                    ignoreEpisodeMatch: false, // Default setting for 'Ignore Episode Match'
-                    notifyOnEpisodeSkip: true, // Default setting for 'Notify on Episode Skip'
-                    sortBy: 0 // Default setting for 'Sort By'
+                Domains[domain] = {
+                    i: uid,
+                    c: 0, // Default Category to "Anime"
+                    ot: 0, // 'Obtain Title From' URL
+                    otm: "", // Empty Title Match String
+                    os: 0, // 'Obtain Season From' URL
+                    osm: "", // Empty Season Match String
+                    oe: 0, // 'Obtain Episode From' URL
+                    oem: "", // Empty Episode Match String
+                    ie: false, // 'Ignore Episode Match'
+                    n: true, // 'Notify on Episode Skip'
+                    s: 0 // 'Sort By' Last Updated
                 };
-            });
-            save = true;
-        }
-
-        Object.keys(trackedDomains).forEach(domain => {
-            console.log(`Inspecting ${domain}`);
-            if (!('obtainTitleFrom' in trackedDomains[domain])) {
-                trackedDomains[domain]['obtainTitleFrom'] = 0; // Default to URL if not found
-                save = true;
-                console.log(`Updated obtainTitleFrom to (int)${fromOptions[trackedDomains[domain].obtainTitleFrom]}`);
-            } else if (typeof(trackedDomains[domain].obtainTitleFrom) != "number") {
-                console.log(`Typeof obtainTitleFrom (${typeof(trackedDomains[domain].obtainTitleFrom)})`);
+                saveDomains(Domains);
+                console.log(`Domain ${domain} is now being tracked.`);
                 try {
-                    trackedDomains[domain].obtainTitleFrom = fromOptions.findIndex(trackedDomains[domain].obtainTitleFrom);
+                    chrome.runtime.sendMessage({ action: "reload" });
                 } catch (err) {
-                    trackedDomains[domain].obtainTitleFrom = 0; // Default to URL if not found
+                    console.log(`Could not send reload message: ${err.message}`);
                 }
-                save = true;
-                console.log(`Updated obtainTitleFrom to (int)${fromOptions[trackedDomains[domain].obtainTitleFrom]}`);
-            }
-            if (!('obtainSeasonFrom' in trackedDomains[domain])) {
-                trackedDomains[domain]['obtainSeasonFrom'] = 0; // Default to URL if not found
-                save = true;
-                console.log(`Updated obtainSeasonFrom to (int)${fromOptions[trackedDomains[domain].obtainSeasonFrom]}`);
-            } else if (typeof(trackedDomains[domain].obtainSeasonFrom) != "number") {
-                console.log(`Typeof obtainSeasonFrom (${typeof(trackedDomains[domain].obtainSeasonFrom)})`);
-                try {
-                    trackedDomains[domain].obtainSeasonFrom = fromOptions.findIndex(trackedDomains[domain].obtainSeasonFrom);
-                } catch (err) {
-                    trackedDomains[domain].obtainSeasonFrom = 0; // Default to URL if not found
-                }
-                save = true;
-                console.log(`Updated obtainSeasonFrom to (int)${fromOptions[trackedDomains[domain].obtainSeasonFrom]}`);
-            }
-            if (!('obtainEpisodeFrom' in trackedDomains[domain])) {
-                trackedDomains[domain]['obtainEpisodeFrom'] = 0; // Default to URL if not found
-                save = true;
-                console.log(`Updated obtainEpisodeFrom to (int)${fromOptions[trackedDomains[domain].obtainEpisodeFrom]}`);
-            } else if (typeof(trackedDomains[domain].obtainEpisodeFrom) != "number") {
-                console.log(`Typeof obtainEpisodeFrom (${typeof(trackedDomains[domain].obtainEpisodeFrom)})`);
-                try {
-                    trackedDomains[domain].obtainEpisodeFrom = fromOptions.findIndex(trackedDomains[domain].obtainEpisodeFrom);
-                } catch (err) {
-                    trackedDomains[domain].obtainEpisodeFrom = 0; // Default to URL if not found
-                }
-                save = true;
-                console.log(`Updated obtainEpisodeFrom to (int)${fromOptions[trackedDomains[domain].obtainEpisodeFrom]}`);
-            }
-            if (!('sortBy' in trackedDomains[domain])) {
-                trackedDomains[domain]['sortBy'] = 0; // Default to URL if not found
-                console.log(`Updated sortBy to (int)${sortBy[trackedDomains[domain].sortBy]}`);
-            } else if (typeof(trackedDomains[domain].sortBy) != "number") {
-                console.log(`Typeof sortBy (${typeof(trackedDomains[domain].sortBy)})`);
-                try {
-                    trackedDomains[domain].sortBy = sortBy.findIndex(trackedDomains[domain].sortBy);
-                } catch (err) {
-                    trackedDomains[domain].sortBy = 0; // Default to Last Viewed if not found
-                }
-                save = true;
-                console.log(`Updated sortBy to (int)${sortBy[trackedDomains[domain].sortBy]}`);
             }
         });
-
-        if (save) {
-            // Implement actual saving logic here using chrome.storage if needed
-            chrome.storage.local.set({ trackedDomains }, () => {
-                console.log('Saved domain settings:', trackedDomains);
-            });
-        }
-
-    });
-
-    chrome.storage.local.get('episodes', (data) => {
-        const episodes = data.episodes || {};
-        let save = false;
-
-        Object.keys(episodes).forEach(title => {
-            if (!('completed' in episodes[title])) {
-                save = true;
-                episodes[title]['completed'] = false;
-                console.log(`Moved ${title} to not-completed`);
-            }
-        });
-
-        if (save) {
-            // Implement actual saving logic here using chrome.storage if needed
-            chrome.storage.local.set({ episodes }, () => {
-                console.log('Saved episodes:', episodes);
-            });
-        }
-    });
 }
