@@ -10,6 +10,7 @@ const subRegex = /^(?:[^.]+\.)?([^.]+\.[^/]+.*$)/i;
 // options.js
 const fromOptions = ["URL", "Tab Text", "Content on Page"];
 const sortBy = ["Last Viewed", "Ascending", "Descending"];
+const category = ["Anime", "Manga", "Other"];
 
 const MAX_TITLE_LENGTH = 73;
 

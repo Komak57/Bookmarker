@@ -80,7 +80,8 @@ async function displayEpisodes(domain, url) {
                             const episodeCard = document.createElement("a");
                             episodeCard.classList.add("episode-card");
                             // episodeCard.onclick = () => { chrome.tabs.create({ url: `${domain}/${episode.l}` }); };
-                            episodeCard.href = `${domain}/${episode.l}`;
+                            episodeCard.href = `https://${domain}${episode.l.startsWith("/")? "":"/"}${episode.l}`;
+                            // TODO: Setting to load in new tab, or current tab
                             episodeCard.target = '_blank'; // Open link in a new tab
 
                             const episodeThumbnail = document.createElement("img");
