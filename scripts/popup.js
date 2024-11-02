@@ -86,7 +86,7 @@ async function displayEpisodes(domain, url) {
                         // for (let id in episodesArray) {
                         //     const episode = episodes[id];
                         episodesArray.forEach(([id, episode]) => {
-                            console.log('Rendering: ', episode.t);
+                            // console.log('Rendering: ', episode.t);
                             const episodeListItem = document.createElement("li");
                             episodeListItem.classList.add("episode-item");
 

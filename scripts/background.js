@@ -220,13 +220,13 @@ function getFromAPI(details, tab, settings) {
                     if (titles) {
                         // Check array of titles for english title
                         let title = titles[0].title;
-                        jikan.t = title[0]; // Default to first-found (usually Default)
+                        jikan.t = title; // Default to first-found (usually Default)
                         titles.forEach(t => {
                             if (t.type == "English") // Found english
                                 jikan.t = t.title;
                             // title = t.title;
                         });
-                        console.log(`JIKAN Success: ${jikan.id} / ${jikan.title}`);
+                        console.log(`JIKAN Success: ${jikan.id} / ${jikan.t}`);
                     } else {
                         if (ret.json.data[0].title) // default
                             jikan.t = ret.json.data[0].title;
@@ -268,13 +268,13 @@ function getFromAPI(details, tab, settings) {
                     if (titles) {
                         // Check array of titles for english title
                         let title = titles[0].title;
-                        jikan.t = title[0]; // Default to first-found (usually Default)
+                        jikan.t = title; // Default to first-found (usually Default)
                         titles.forEach(t => {
                             if (t.type == "English") // Found english
                                 jikan.t = t.title;
                             // title = t.title;
                         });
-                        console.log(`JIKAN Success: ${jikan.id} / ${jikan.title}`);
+                        console.log(`JIKAN Success: ${jikan.id} / ${jikan.t}`);
                     } else {
                         if (ret.json.data[0].title) // default
                             jikan.t = ret.json.data[0].title;
