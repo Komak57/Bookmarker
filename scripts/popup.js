@@ -169,7 +169,9 @@ async function displayEpisodes(domain, url) {
                             episodeInfo.appendChild(details);
 
                             // Append episode info and delete icon to the card
-                            episodeCard.appendChild(episodeThumbnail);
+                            // Only add the image in the event we HAVE a thumbnail
+                            if (episode.p !== "")
+                                episodeCard.appendChild(episodeThumbnail);
                             episodeCard.appendChild(episodeInfo);
                             episodeCard.appendChild(completeIcon);
                             episodeCard.appendChild(trashIcon);

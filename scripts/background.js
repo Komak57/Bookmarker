@@ -118,49 +118,122 @@ async function addEpisode(domain, settings, tab) {
 
                     const details = getDetails(domain, documentContent, tab, settings);
 
-                    // TODO: Get title from API - https://api.jikan.moe/v4/anime?q=
-                    fetchJikan(details)
-                        .then(ret => {
-                            if (!ret.json.data[0]) {
-                                console.error(`JIKAN Data[0] not Found`);
-                                return;
+                    switch (settings.c) {
+                        case 2:
+                            {
+                                // TODO: Get title from existing match
+                                const ep = {
+                                    id: details.title,
+                                    c: settings.c, // Other
+                                    d: settings.i,
+                                    f: 0,
+                                    t: details.title,
+                                    e: details.episode,
+                                    n: details.episode,
+                                    p: "", // TODO: Set to static Thumbnail?
+                                    l: "tab.url", // URL Last Viewed
+                                    u: Date.now() // Track the time it was viewed
+                                };
+                                console.log(`Raw Success: ${ep.id} / ${ep.t}`);
+                                addEpisodeToStorage(ep, tab, settings);
+                                break;
                             }
-                            const jikan = {
-                                id: ret.json.data[0].mal_id,
-                                c: 0, // Anime
-                                d: settings.i, // TODO: Get Domain ID
-                                f: 0,
-                                t: details.title,
-                                e: details.episode,
-                                n: ret.json.data[0].episodes,
-                                p: ret.json.data[0].images.jpg.small_image_url, // TODO: Get Thumbnail
-                                l: "tab.url", // URL Last Viewed
-                                u: Date.now() // Track the time it was viewed
-                            };
-                            // Try to get Title from Jikan.
-                            // NOTE: It can be in an array called "Titles", or as a collection of objects called "title(_language?)"
-                            const titles = ret.json.data[0].titles;
-                            if (titles) {
-                                // Check array of titles for english title
-                                let title = titles[0].title;
-                                jikan.t = title[0]; // Default to first-found (usually Default)
-                                titles.forEach(t => {
-                                    if (t.type == "English") // Found english
-                                        jikan.t = t.title;
-                                    // title = t.title;
-                                });
-                                console.log(`JIKAN Success: ${jikan.id} / ${jikan.title}`);
-                            } else {
-                                if (ret.json.data[0].title) // default
-                                    jikan.t = ret.json.data[0].title;
-                                if (ret.json.data[0].title_english) // english
-                                    jikan.t = ret.json.data[0].title_english;
+                        case 1:
+                            {
+                                // Get title from API - https://api.jikan.moe/v4/manga?q=
+                                fetchJikanManga(details)
+                                .then(ret => {
+                                    if (!ret.json.data[0]) {
+                                        console.error(`JIKAN Data[0] not Found`);
+                                        return;
+                                    }
+                                    const jikan = {
+                                        id: ret.json.data[0].mal_id,
+                                        c: settings.c, // Anime
+                                        d: settings.i,
+                                        f: 0,
+                                        t: details.title,
+                                        e: details.episode,
+                                        n: ret.json.data[0].episodes,
+                                        p: ret.json.data[0].images.jpg.small_image_url, // TODO: Get Thumbnail
+                                        l: "tab.url", // URL Last Viewed
+                                        u: Date.now() // Track the time it was viewed
+                                    };
+                                    // Try to get Title from Jikan.
+                                    // NOTE: It can be in an array called "Titles", or as a collection of objects called "title(_language?)"
+                                    const titles = ret.json.data[0].titles;
+                                    if (titles) {
+                                        // Check array of titles for english title
+                                        let title = titles[0].title;
+                                        jikan.t = title[0]; // Default to first-found (usually Default)
+                                        titles.forEach(t => {
+                                            if (t.type == "English") // Found english
+                                                jikan.t = t.title;
+                                            // title = t.title;
+                                        });
+                                        console.log(`JIKAN Success: ${jikan.id} / ${jikan.title}`);
+                                    } else {
+                                        if (ret.json.data[0].title) // default
+                                            jikan.t = ret.json.data[0].title;
+                                        if (ret.json.data[0].title_english) // english
+                                            jikan.t = ret.json.data[0].title_english;
+                                    }
+                                    // replace title
+                                    // ret.data.title = title;
+                                    addEpisodeToStorage(jikan, tab, settings);
+                                })
+                                .catch(error => console.error(`JIKAN Error: ${error}`));
+                                break;
                             }
-                            // replace title
-                            // ret.data.title = title;
-                            addEpisodeToStorage(jikan, tab, settings);
-                        })
-                        .catch(error => console.error(`JIKAN Error: ${error}`));
+                        case 0:
+                        default:
+                            {
+                                // Get title from API - https://api.jikan.moe/v4/anime?q=
+                                fetchJikanAnime(details)
+                                .then(ret => {
+                                    if (!ret.json.data[0]) {
+                                        console.error(`JIKAN Data[0] not Found`);
+                                        return;
+                                    }
+                                    const jikan = {
+                                        id: ret.json.data[0].mal_id,
+                                        c: settings.c, // Anime
+                                        d: settings.i, // TODO: Get Domain ID
+                                        f: 0,
+                                        t: details.title,
+                                        e: details.episode,
+                                        n: ret.json.data[0].episodes,
+                                        p: ret.json.data[0].images.jpg.small_image_url, // TODO: Get Thumbnail
+                                        l: "tab.url", // URL Last Viewed
+                                        u: Date.now() // Track the time it was viewed
+                                    };
+                                    // Try to get Title from Jikan.
+                                    // NOTE: It can be in an array called "Titles", or as a collection of objects called "title(_language?)"
+                                    const titles = ret.json.data[0].titles;
+                                    if (titles) {
+                                        // Check array of titles for english title
+                                        let title = titles[0].title;
+                                        jikan.t = title[0]; // Default to first-found (usually Default)
+                                        titles.forEach(t => {
+                                            if (t.type == "English") // Found english
+                                                jikan.t = t.title;
+                                            // title = t.title;
+                                        });
+                                        console.log(`JIKAN Success: ${jikan.id} / ${jikan.title}`);
+                                    } else {
+                                        if (ret.json.data[0].title) // default
+                                            jikan.t = ret.json.data[0].title;
+                                        if (ret.json.data[0].title_english) // english
+                                            jikan.t = ret.json.data[0].title_english;
+                                    }
+                                    // replace title
+                                    // ret.data.title = title;
+                                    addEpisodeToStorage(jikan, tab, settings);
+                                })
+                                .catch(error => console.error(`JIKAN Error: ${error}`));
+                                break;
+                            }
+                    }
                 }
             }
         });
@@ -168,49 +241,166 @@ async function addEpisode(domain, settings, tab) {
     } else {
         // If we don't need content from the page, just add it with what we have
         const details = getDetails(domain, { title: 'ignored', season: 'ignored', episode: 'ignored' }, tab, settings);
-        // TODO: Get title from API - https://api.jikan.moe/v4/anime?q=
-        fetchJikan(details)
-            .then(ret => {
-                if (!ret.json.data[0]) {
-                    console.error(`JIKAN Data[0] not Found`);
-                    return;
+
+        switch (settings.c) {
+            case 2:
+                {
+                    // TODO: Get title from existing match
+                    const ep = {
+                        id: details.title,
+                        c: settings.c, // Other
+                        d: settings.i,
+                        f: 0,
+                        t: details.title,
+                        e: details.episode,
+                        n: details.episode,
+                        p: "", // TODO: Set to static Thumbnail?
+                        l: "tab.url", // URL Last Viewed
+                        u: Date.now() // Track the time it was viewed
+                    };
+                    console.log(`Raw Success: ${ep.id} / ${ep.t}`);
+                    addEpisodeToStorage(ep, tab, settings);
+                    break;
                 }
-                const jikan = {
-                    id: ret.json.data[0].mal_id,
-                    c: 0, // Anime
-                    d: settings.i, // TODO: Get Domain ID
-                    f: 0,
-                    t: details.title,
-                    e: details.episode,
-                    n: ret.json.data[0].episodes,
-                    p: ret.json.data[0].images.jpg.small_image_url, // TODO: Get Thumbnail
-                    l: "tab.url", // URL Last Viewed
-                    u: Date.now() // Track the time it was viewed
-                };
-                // Try to get Title from Jikan.
-                // NOTE: It can be in an array called "Titles", or as a collection of objects called "title(_language?)"
-                const titles = ret.json.data[0].titles;
-                if (titles) {
-                    // Check array of titles for english title
-                    let title = titles[0].title;
-                    jikan.t = title[0]; // Default to first-found (usually Default)
-                    titles.forEach(t => {
-                        if (t.type == "English") // Found english
-                            jikan.t = t.title;
-                        // title = t.title;
-                    });
-                    console.log(`JIKAN Success: ${jikan.id} / ${jikan.title}`);
-                } else {
-                    if (ret.json.data[0].title) // default
-                        jikan.t = ret.json.data[0].title;
-                    if (ret.json.data[0].title_english) // english
-                        jikan.t = ret.json.data[0].title_english;
+            case 1:
+                {
+                    // Get title from API - https://api.jikan.moe/v4/manga?q=
+                    fetchJikanManga(details)
+                    .then(ret => {
+                        if (!ret.json.data[0]) {
+                            console.error(`JIKAN Data[0] not Found`);
+                            return;
+                        }
+                        const jikan = {
+                            id: ret.json.data[0].mal_id,
+                            c: settings.c, // Manga
+                            d: settings.i, // TODO: Get Domain ID
+                            f: 0,
+                            t: details.title,
+                            e: details.episode,
+                            n: ret.json.data[0].episodes,
+                            p: ret.json.data[0].images.jpg.small_image_url, // TODO: Get Thumbnail
+                            l: "tab.url", // URL Last Viewed
+                            u: Date.now() // Track the time it was viewed
+                        };
+                        // Try to get Title from Jikan.
+                        // NOTE: It can be in an array called "Titles", or as a collection of objects called "title(_language?)"
+                        const titles = ret.json.data[0].titles;
+                        if (titles) {
+                            // Check array of titles for english title
+                            let title = titles[0].title;
+                            jikan.t = title[0]; // Default to first-found (usually Default)
+                            titles.forEach(t => {
+                                if (t.type == "English") // Found english
+                                    jikan.t = t.title;
+                                // title = t.title;
+                            });
+                            console.log(`JIKAN Success: ${jikan.id} / ${jikan.title}`);
+                        } else {
+                            if (ret.json.data[0].title) // default
+                                jikan.t = ret.json.data[0].title;
+                            if (ret.json.data[0].title_english) // english
+                                jikan.t = ret.json.data[0].title_english;
+                        }
+                        // replace title
+                        // ret.data.title = title;
+                        addEpisodeToStorage(jikan, tab, settings);
+                    })
+                    .catch(error => console.error(`JIKAN Error: ${error}`));
+                    break;
                 }
-                // replace title
-                // ret.data.title = title;
-                addEpisodeToStorage(jikan, tab, settings);
-            })
-            .catch(error => console.error(`JIKAN Error: ${error}`));
+            case 0:
+            default:
+                {
+                    // Get title from API - https://api.jikan.moe/v4/anime?q=
+                    fetchJikanAnime(details)
+                    .then(ret => {
+                        if (!ret.json.data[0]) {
+                            console.error(`JIKAN Data[0] not Found`);
+                            return;
+                        }
+                        const jikan = {
+                            id: ret.json.data[0].mal_id,
+                            c: settings.c, // Anime
+                            d: settings.i, // TODO: Get Domain ID
+                            f: 0,
+                            t: details.title,
+                            e: details.episode,
+                            n: ret.json.data[0].episodes,
+                            p: ret.json.data[0].images.jpg.small_image_url, // TODO: Get Thumbnail
+                            l: "tab.url", // URL Last Viewed
+                            u: Date.now() // Track the time it was viewed
+                        };
+                        // Try to get Title from Jikan.
+                        // NOTE: It can be in an array called "Titles", or as a collection of objects called "title(_language?)"
+                        const titles = ret.json.data[0].titles;
+                        if (titles) {
+                            // Check array of titles for english title
+                            let title = titles[0].title;
+                            jikan.t = title[0]; // Default to first-found (usually Default)
+                            titles.forEach(t => {
+                                if (t.type == "English") // Found english
+                                    jikan.t = t.title;
+                                // title = t.title;
+                            });
+                            console.log(`JIKAN Success: ${jikan.id} / ${jikan.title}`);
+                        } else {
+                            if (ret.json.data[0].title) // default
+                                jikan.t = ret.json.data[0].title;
+                            if (ret.json.data[0].title_english) // english
+                                jikan.t = ret.json.data[0].title_english;
+                        }
+                        // replace title
+                        // ret.data.title = title;
+                        addEpisodeToStorage(jikan, tab, settings);
+                    })
+                    .catch(error => console.error(`JIKAN Error: ${error}`));
+                    break;
+                }
+        }
+        // // Get title from API - https://api.jikan.moe/v4/anime?q=
+        // fetchJikan(details, settings)
+        //     .then(ret => {
+        //         if (!ret.json.data[0]) {
+        //             console.error(`JIKAN Data[0] not Found`);
+        //             return;
+        //         }
+        //         const jikan = {
+        //             id: ret.json.data[0].mal_id,
+        //             c: 0, // Anime
+        //             d: settings.i, // TODO: Get Domain ID
+        //             f: 0,
+        //             t: details.title,
+        //             e: details.episode,
+        //             n: ret.json.data[0].episodes,
+        //             p: ret.json.data[0].images.jpg.small_image_url, // TODO: Get Thumbnail
+        //             l: "tab.url", // URL Last Viewed
+        //             u: Date.now() // Track the time it was viewed
+        //         };
+        //         // Try to get Title from Jikan.
+        //         // NOTE: It can be in an array called "Titles", or as a collection of objects called "title(_language?)"
+        //         const titles = ret.json.data[0].titles;
+        //         if (titles) {
+        //             // Check array of titles for english title
+        //             let title = titles[0].title;
+        //             jikan.t = title[0]; // Default to first-found (usually Default)
+        //             titles.forEach(t => {
+        //                 if (t.type == "English") // Found english
+        //                     jikan.t = t.title;
+        //                 // title = t.title;
+        //             });
+        //             console.log(`JIKAN Success: ${jikan.id} / ${jikan.title}`);
+        //         } else {
+        //             if (ret.json.data[0].title) // default
+        //                 jikan.t = ret.json.data[0].title;
+        //             if (ret.json.data[0].title_english) // english
+        //                 jikan.t = ret.json.data[0].title_english;
+        //         }
+        //         // replace title
+        //         // ret.data.title = title;
+        //         addEpisodeToStorage(jikan, tab, settings);
+        //     })
+        //     .catch(error => console.error(`JIKAN Error: ${error}`));
     }
 }
 
@@ -315,7 +505,7 @@ function getDetails(domain, document, tab, settings) {
     }
     switch (parseInt(settings.os)) {
         case 0:
-            console.log(`Searching Episode using: '${new URL(tab.url).pathname}'`);
+            console.log(`Searching Season using: '${new URL(tab.url).pathname}'`);
             getSeasonDetails(data, new URL(tab.url).pathname, settings);
             break;
         case 1:
@@ -395,7 +585,28 @@ function getTitleDetails(data, context, settings) {
         .join(' ');
 }
 
-async function fetchJikan(details) {
+async function fetchJikanAnime(details) {
+    const url = `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(details.title)}&limit=1`;
+    console.log(`Attempting JIKAN API: ${url}`);
+
+    try {
+        const response = await fetch(url); // Await the fetch response
+        console.log('Response status:', response.status); // Should log the status code
+
+        if (response.ok) { // Checks if status is in the range 200-299
+            const json = await response.json(); // Parse JSON if response is successful
+            console.log(`JIKAN: Data Retrieved`);
+            return { data: details, json: json };
+        } else {
+            console.error(`Bad response from JIKAN: ${response.status}`);
+            return { data: details, json: null };
+        }
+    } catch (error) {
+        console.error('Fetch error:', error); // Handle network errors
+        return { data: details, json: null };
+    }
+}
+async function fetchJikanManga(details) {
     const url = `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(details.title)}&limit=1`;
     console.log(`Attempting JIKAN API: ${url}`);
 
