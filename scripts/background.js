@@ -117,6 +117,11 @@ async function addEpisode(domain, settings, tab) {
                     console.log('Current Document content retrieved. ', documentContent);
 
                     const details = getDetails(domain, documentContent, tab, settings);
+
+                    if (details.episode == 0 && settings.ie == 0) {
+                        console.log(`Episode not found. ${details.title} skipped.`);
+                        return;
+                    }
                     const data = getFromAPI(details, tab, settings);
                 }
             }
@@ -125,6 +130,11 @@ async function addEpisode(domain, settings, tab) {
     } else {
         // If we don't need content from the page, just add it with what we have
         const details = getDetails(domain, { title: 'ignored', season: 'ignored', episode: 'ignored' }, tab, settings);
+
+        if (details.episode == 0 && settings.ie == 0) {
+            console.log(`Episode not found. ${details.title} skipped.`);
+            return;
+        }
         const data = getFromAPI(details, tab, settings);
         // // Get title from API - https://api.jikan.moe/v4/anime?q=
         // fetchJikan(details, settings)
@@ -199,7 +209,7 @@ function getFromAPI(details, tab, settings) {
                 fetchJikanManga(details)
                 .then(ret => {
                     if (!ret.json.data[0]) {
-                        console.error(`JIKAN Data[0] not Found`);
+                        console.error(`JIKAN Data[0] not Found searching ${tab.url}`);
                         return;
                     }
                     const jikan = {
@@ -247,7 +257,7 @@ function getFromAPI(details, tab, settings) {
                 fetchJikanAnime(details)
                 .then(ret => {
                     if (!ret.json.data[0]) {
-                        console.error(`JIKAN Data[0] not Found`);
+                        console.error(`JIKAN Data[0] not Found searching ${tab.url}`);
                         return;
                     }
                     const jikan = {

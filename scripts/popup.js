@@ -95,7 +95,8 @@ async function displayEpisodes(domain, url) {
                             // episodeCard.onclick = () => { chrome.tabs.create({ url: `${domain}/${episode.l}` }); };
                             const [targetDomain, targetSettings] = Object.entries(Domains).find(([d, s]) => s.i === episode.d);
                             episodeCard.href = `https://${targetDomain}${episode.l.startsWith("/")? "":"/"}${episode.l}`;
-                            // TODO: Setting to load in new tab, or current tab
+                            // Load bookmark in current tab if we're on the same domain, else, load in a new tab
+                            // if (episode.d != settings.i)
                             episodeCard.target = '_blank'; // Open link in a new tab
 
                             const episodeThumbnail = document.createElement("img");
