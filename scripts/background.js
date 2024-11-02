@@ -564,7 +564,7 @@ function addEpisodeToStorage(jikan, tab, settings) {
             if (episodes[jikan.id]) {
                 if (jikan.e <= episodes[jikan.id].e) {
                     console.log(`Episode already watched: ${jikan.id}. No updates made.`);
-                } else if (isEpisodeSequential(jikan.episode.toString(), episodes[jikan.id].episode.toString())) {
+                } else if (isEpisodeSequential(jikan.e.toString(), episodes[jikan.id].e.toString())) {
                     // Update the episode if it is sequential
                     episodes[jikan.id].d = settings.i; // we're changing URL, so we need to change the domain it links to as well
                     episodes[jikan.id].l = tab.url; // update URL
@@ -572,7 +572,7 @@ function addEpisodeToStorage(jikan, tab, settings) {
                     episodes[jikan.id].e = jikan.e;
                     episodes[jikan.id].f = jikan.f;
                     episodes[jikan.id].u = Date.now();
-                    console.log(`Updated: ${jikan.id} - Episode ${jikan.episode}`);
+                    console.log(`Updated: ${jikan.id} - Episode ${jikan.e}`);
                 } else {
                     // Notify because the episode is tracked, but watched out of order
                     console.log(`Episode watched out of order for: ${jikan.id}. No updates made.`);
@@ -650,11 +650,11 @@ function addEpisodeToStorage(jikan, tab, settings) {
             // console.log('Episodes saved:', episodes);
             saveEpisodes(episodes);
 
-            try {
-                chrome.runtime.sendMessage({ action: "reload" });
-            } catch (err) {
-                console.log(`Could not send reload message: ${err.message}`);
-            }
+            chrome.runtime.sendMessage({ action: "reload" }, (response) => {
+                if (chrome.runtime.lastError)
+                ; // Ignore Error when user stops focusing
+
+            });
             // });
         });
 }
@@ -765,11 +765,11 @@ async function trackDomain(domain) {
                 };
                 saveDomains(Domains);
                 console.log(`Domain ${domain} is now being tracked.`);
-                try {
-                    chrome.runtime.sendMessage({ action: "reload" });
-                } catch (err) {
-                    console.log(`Could not send reload message: ${err.message}`);
-                }
+                chrome.runtime.sendMessage({ action: "reload" }, (response) => {
+                    if (chrome.runtime.lastError)
+                    ; // Ignore Error when user stops focusing
+
+                });
             }
         });
 }
