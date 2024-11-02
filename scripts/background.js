@@ -493,7 +493,7 @@ async function fetchJikanAnime(details) {
     }
 }
 async function fetchJikanManga(details) {
-    const url = `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(details.title)}&limit=1`;
+    const url = `https://api.jikan.moe/v4/manga?q=${encodeURIComponent(details.title)}&limit=1`;
     console.log(`Attempting JIKAN API: ${url}`);
 
     try {
