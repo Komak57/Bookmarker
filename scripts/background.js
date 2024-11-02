@@ -185,7 +185,7 @@ function getFromAPI(details, tab, settings) {
                     t: details.title,
                     e: details.episode,
                     n: details.episode,
-                    p: "", // TODO: Set to static Thumbnail?
+                    p: "", // Empty thumbnail removes it from the Episode Card
                     l: "tab.url", // URL Last Viewed
                     u: Date.now() // Track the time it was viewed
                 };
@@ -205,12 +205,12 @@ function getFromAPI(details, tab, settings) {
                     const jikan = {
                         id: ret.json.data[0].mal_id,
                         c: settings.c, // Manga
-                        d: settings.i, // TODO: Get Domain ID
+                        d: settings.i,
                         f: 0,
                         t: details.title,
                         e: details.episode,
-                        n: ret.json.data[0].episodes,
-                        p: ret.json.data[0].images.jpg.small_image_url, // TODO: Get Thumbnail
+                        n: ret.json.data[0].chapters, // Jikan uses chapters for anime, not episodes
+                        p: ret.json.data[0].images.jpg.small_image_url,
                         l: "tab.url", // URL Last Viewed
                         u: Date.now() // Track the time it was viewed
                     };
@@ -253,12 +253,12 @@ function getFromAPI(details, tab, settings) {
                     const jikan = {
                         id: ret.json.data[0].mal_id,
                         c: settings.c, // Anime
-                        d: settings.i, // TODO: Get Domain ID
+                        d: settings.i,
                         f: 0,
                         t: details.title,
                         e: details.episode,
                         n: ret.json.data[0].episodes,
-                        p: ret.json.data[0].images.jpg.small_image_url, // TODO: Get Thumbnail
+                        p: ret.json.data[0].images.jpg.small_image_url,
                         l: "tab.url", // URL Last Viewed
                         u: Date.now() // Track the time it was viewed
                     };
@@ -543,7 +543,7 @@ function getEpisodeDetails(data, context, settings) {
         }
     }
     data.matched = eMatch;
-    data.episode = episodeMatch ? parseInt(episodeMatch[1]) : settings.ie ? 1 : 0;
+    data.episode = episodeMatch ? episodeMatch[1] : settings.ie ? 1 : 0;
 }
 let isWindowCreated = false;
 // Function to add episode to storage

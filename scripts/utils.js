@@ -2,8 +2,8 @@
 const yearRegex = /[^a-z0-9]\b([12][90][0-9][0-9])\b[^a-z0-9]/i;
 const seasonRegex_Rigid = /(?:(?:season|s)(\d+)|(\d+)[- ]?(?:th|rd|nd|st)?[- ]?(season|s))/i;
 //const seasonRegex_Soft = /(?:[^\d]|^)(\d+)[- ]?(?:th|nd|st)?[- ]?season(?:[^\d]|$)/i;
-const episodeRegex_Rigid = /(?:episode|ep|e|part|chapter|ch)?[- ]?(\d+[a-z]?)$\b/i;
-const episodeRegex_Simple = /(?:episode|ep|e|part|chapter|ch)[- ]?(\d+[a-z]?)\b/i;
+const episodeRegex_Rigid = /(?:episode|ep|e|part|chapter|ch)?[- ]?(\d+(?:[a-z.]?\d+))$/i;
+const episodeRegex_Simple = /(?:episode|ep|e|part|chapter|ch)?[- ]?(\d+(?:[a-z.]?\d+))\b/i;
 const episodeRegex_Soft = /\b(\d+[a-z]?)\b/i;
 const subRegex = /^(?:[^.]+\.)?([^.]+\.[^/]+.*$)/i;
 
@@ -197,26 +197,37 @@ function normalizeUrl(url) {
     return url.trim().toLowerCase(); // Normalize URL
 }
 
-// Function to determine if the episode is greater than 1
-function isEpisodeSequential(a, b) {
-    const a_match = String(a).match(/(\d+)([a-z]?)$/);
-    const b_match = String(b).match(/(\d+)([a-z]?)$/);
+// Function to determine if the episode is 1 incremented from previous
+// Also allows for alpha "parts" as well as decimal "parts"
+function isEpisodeSequential(newEpisode, savedEpisode) {
+    const newEpisode_match = String(newEpisode).match(/(\d+)([a-z]?|[.](\d+))$/);
+    const savedEpisode_match = String(savedEpisode).match(/(\d+)([a-z]?|[.](\d+))$/);
 
-    const a_ep = parseInt(a_match[1]);
-    const a_sfx = a_match[2];
+    const newEpisode_ep = parseInt(newEpisode_match[1]);
+    let newEpisode_sfx = newEpisode_match[2];
+    if (newEpisode_match[3])
+        newEpisode_sfx = parseInt(newEpisode_match[3]);
 
-    const b_ep = parseInt(b_match[1]);
-    const b_sfx = b_match[2];
+    const savedEpisode_ep = parseInt(savedEpisode_match[1]);
+    let savedEpisode_sfx = savedEpisode_match[2];
+    if (savedEpisode_match[3])
+        savedEpisode_sfx = parseInt(savedEpisode_match[3]);
 
     // If we had a suffix...
-    if (b_sfx) {
+    if (savedEpisode_sfx) {
         // But now we don't...
-        if (b_sfx)
-            return a_ep == b_ep + 1; // Only allow if we incremented the episode
+        if (!newEpisode_sfx)
+            return newEpisode_ep == savedEpisode_ep + 1; // Only allow if we incremented the episode
+        if (newEpisode_match[3])
+            return newEpisode_sfx == savedEpisode_sfx + 1; // If working with decimal parts, allow in seq
         // else, only allow sequential letters
-        return a_sfx.charCodeAt(0) == b_sfx.charCodeAt(0);
+        return newEpisode_sfx.charCodeAt(0) == savedEpisode_sfx.charCodeAt(0);
     } else {
-        return a_ep == b_ep + 1;
+        // We didn't have a suffix
+        // But now we do...
+        if (newEpisode_sfx)
+            return newEpisode_sfx == 1 || newEpisode_sfx == "a"; // Only allow first-increment
+        return newEpisode_ep == savedEpisode_ep + 1;
     }
 }
 
