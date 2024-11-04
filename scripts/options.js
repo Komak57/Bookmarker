@@ -230,11 +230,25 @@ function updateDomainSetting(trackedDomains, domain, settingKey, newValue) {
 }
 
 // Function to move episodes to another domain
-function moveEpisodes(fromDomain, toDomain) {
+function moveEpisodes(Domains, fromDomain, toDomain) {
+    // Get Domain ID's
     if (fromDomain && toDomain) {
         // Logic to transfer episodes between domains
-        console.log(`Moving episodes from ${fromDomain} to ${toDomain}`);
+        const fID = Domains[fromDomain].i;
+        const tID = Domains[toDomain].i;
+        console.log(`Moving episodes from ${fromDomain}(${fID}) to ${toDomain}(${tID})`);
         // You can implement logic here to update the stored data and transfer the episodes
+        getEpisodes()
+            .then((episodes) => {
+                for (let id in episodes) {
+                    if (episodes[id].d == fID) {
+                        episodes[id].d = tID; // Transfer domain control
+                        // episodes[id].c = Domains[toDomain].c; // Transfer category
+                    }
+                }
+                console.log(`Domains after transfer:`, episodes);
+                saveEpisodes(episodes);
+            });
     }
 }
 
