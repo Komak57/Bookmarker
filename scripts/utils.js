@@ -10,7 +10,7 @@ const subRegex = /^(?:[^.]+\.)?([^.]+\.[^/]+.*$)/i;
 // options.js
 const fromOptions = ["URL", "Tab Text", "Content on Page"];
 const sortBy = ["Last Viewed", "Ascending", "Descending"];
-const categories = ["Anime", "Manga", "Other"];
+const categories = ["Anime", "Manga", "Movies", "Other"];
 
 const MAX_TITLE_LENGTH = 73;
 
@@ -145,12 +145,13 @@ function saveEpisodes(localEpisodes) {
     // Filter minimal necessary information for cloud storage
     let cloudEpisodes = {};
     for (let id in localEpisodes) {
-        if (localEpisodes[id.toString()].f == 0) {
-            cloudEpisodes[id.toString()] = {
-                c: localEpisodes[id.toString()].c,
-                d: localEpisodes[id.toString()].d,
-                e: localEpisodes[id.toString()].e,
-                l: localEpisodes[id.toString()].l
+        // Not finished, and a category that supports recovery from cloud save data
+        if (localEpisodes[id].f == 0 && localEpisodes[id].c <= 1) {
+            cloudEpisodes[id] = {
+                c: localEpisodes[id].c,
+                d: localEpisodes[id].d,
+                e: localEpisodes[id].e,
+                l: localEpisodes[id].l
             }
         }
     }
