@@ -242,8 +242,12 @@ function VersionUpdate() {
             console.log("Attempting to update outdated variables for v", lastVersion);
 
             switch (lastVersion) {
-                case manifestData.version: // 1.2.0
-                    console.log(`Version v${lastVersion} already up to date.`);
+                case '1.2.0': // 1.2.0
+                    console.log(`No Changes Required for v1.2.0`);
+                    saveVersion('1.2.0');
+                case manifestData.version:
+                    console.log(`No Changes Required for v${manifestData.version}`);
+                    saveVersion(manifestData.version);
                     break;
                 default:
                     console.log(`Version Update could not patch from v${lastVersion} to ${manifestData.version}`);
@@ -262,8 +266,8 @@ function VersionUpdate() {
                     //         console.log("All data cleared from chrome.storage.sync.");
                     //     }
                     // });
+                    saveVersion('manifestData.version');
             }
-            saveVersion(manifestData.version);
         } else {
             console.log(`Version v${lastVersion} already up to date.`);
         }
