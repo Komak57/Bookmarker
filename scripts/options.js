@@ -45,7 +45,9 @@ function loadDomainSettings() {
             const _groupMain = document.createElement('div');
             _groupMain.classList.add('settings-group');
 
+            // ====================================
             // Add Media Type select
+            // ====================================
             const _mediaTypeLabel = document.createElement('label');
             _mediaTypeLabel.textContent = "Media Type:";
             _groupMain.appendChild(_mediaTypeLabel);
@@ -60,7 +62,9 @@ function loadDomainSettings() {
             }
             _groupMain.appendChild(_mediaTypeSelect);
 
-            // Add Media Type select
+            // ====================================
+            // Add Sort By select
+            // ====================================
             const _sortByLabel = document.createElement('label');
             _sortByLabel.textContent = "Sort By:";
             _groupMain.appendChild(_sortByLabel);
@@ -81,107 +85,148 @@ function loadDomainSettings() {
 
             const _groupTitlePair = document.createElement('div');
             _groupTitlePair.classList.add('settings-pair');
+            // ====================================
+            // Create "Obtain Title From" dropdown
+            // ====================================
+            const _obtainTitleFromLabel = document.createElement('label');
+            _obtainTitleFromLabel.textContent = 'Obtain Title From:';
+            _groupTitlePair.appendChild(_obtainTitleFromLabel);
 
-            {
-                // Create "Obtain Title From" dropdown
-                const _obtainFromLabel = document.createElement('label');
-                _obtainFromLabel.textContent = 'Obtain Title From:';
-                _groupTitlePair.appendChild(_obtainFromLabel);
-
-                const _obtainFromSelect = document.createElement('select');
-                for (i = 0; i < fromOptions.length; i++) {
-                    const opt = document.createElement('option');
-                    opt.value = i;
-                    opt.textContent = fromOptions[i];
-                    if (settings.ot == i) opt.selected = true;
-                    _obtainFromSelect.appendChild(opt);
-                }
-                _obtainFromSelect.addEventListener('change', () => updateDomainSetting(trackedDomains, domain, 'ot', parseInt(_obtainFromSelect.value)));
-                _groupTitlePair.appendChild(_obtainFromSelect);
-
-                if (settings.ot == 2) {
-                    // Add "HTML Query Match" input
-                    const queryMatchLabel = document.createElement('label');
-                    queryMatchLabel.textContent = 'Query Title (CSS Selector or Regex):';
-                    _groupTitlePair.appendChild(queryMatchLabel);
-
-                    const queryMatchTextarea = document.createElement('textarea');
-                    queryMatchTextarea.value = settings.otm; // Load existing query or leave blank
-                    queryMatchTextarea.addEventListener('input', () => updateDomainSetting(trackedDomains, domain, 'otm', queryMatchTextarea.value));
-                    _groupTitlePair.appendChild(queryMatchTextarea);
-                }
+            const _obtainTitleFromSelect = document.createElement('select');
+            for (i = 0; i < fromOptions.length; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = fromOptions[i];
+                if (settings.ot == i) opt.selected = true;
+                _obtainTitleFromSelect.appendChild(opt);
             }
+            _obtainTitleFromSelect.addEventListener('change', () => {
+                updateDomainSetting(trackedDomains, domain, 'ot', parseInt(_obtainTitleFromSelect.value))
+                if (settings.ot == 2) {
+                    queryTitleMatchLabel.style.display = 'block';
+                    queryTitleMatchTextarea.style.display = 'block';
+                } else {
+                    queryTitleMatchLabel.style.display = 'none';
+                    queryTitleMatchTextarea.style.display = 'none';
+                }
+            });
+            _groupTitlePair.appendChild(_obtainTitleFromSelect);
+
+            const queryTitleMatchLabel = document.createElement('label');
+            queryTitleMatchLabel.textContent = 'Query Title (CSS Selector or Regex):';
+            _groupTitlePair.appendChild(queryTitleMatchLabel);
+
+            const queryTitleMatchTextarea = document.createElement('textarea');
+            queryTitleMatchTextarea.value = settings.otm; // Load existing query or leave blank
+            queryTitleMatchTextarea.addEventListener('input', () => updateDomainSetting(trackedDomains, domain, 'otm', queryTitleMatchTextarea.value));
+            if (settings.ot == 2) {
+                queryTitleMatchLabel.style.display = 'block';
+                queryTitleMatchTextarea.style.display = 'block';
+            } else {
+                queryTitleMatchLabel.style.display = 'none';
+                queryTitleMatchTextarea.style.display = 'none';
+            }
+            _groupTitlePair.appendChild(queryTitleMatchTextarea);
             _groupObtain.appendChild(_groupTitlePair);
 
             const _groupSeasonPair = document.createElement('div');
             _groupSeasonPair.classList.add('settings-pair');
 
-            {
-                // Create "Obtain Title From" dropdown
-                const _obtainFromLabel = document.createElement('label');
-                _obtainFromLabel.textContent = 'Obtain Season From:';
-                _groupSeasonPair.appendChild(_obtainFromLabel);
+            // ====================================
+            // Create "Obtain Season From" dropdown
+            // ====================================
+            const _obtainSeasonFromLabel = document.createElement('label');
+            _obtainSeasonFromLabel.textContent = 'Obtain Season From:';
+            _groupSeasonPair.appendChild(_obtainSeasonFromLabel);
 
-                const _obtainFromSelect = document.createElement('select');
-                for (i = 0; i < fromOptions.length; i++) {
-                    const opt = document.createElement('option');
-                    opt.value = i;
-                    opt.textContent = fromOptions[i];
-                    if (settings.ot == i) opt.selected = true;
-                    _obtainFromSelect.appendChild(opt);
-                }
-                _obtainFromSelect.addEventListener('change', () => updateDomainSetting(trackedDomains, domain, 'ot', parseInt(_obtainFromSelect.value)));
-                _groupSeasonPair.appendChild(_obtainFromSelect);
-
-                if (settings.os == 2) {
-                    // Add "HTML Query Match" input
-                    const queryMatchLabel = document.createElement('label');
-                    queryMatchLabel.textContent = 'Query Session (CSS Selector or Regex):';
-                    _groupSeasonPair.appendChild(queryMatchLabel);
-
-                    const queryMatchTextarea = document.createElement('textarea');
-                    queryMatchTextarea.value = settings.osm; // Load existing query or leave blank
-                    queryMatchTextarea.addEventListener('input', () => updateDomainSetting(trackedDomains, domain, 'osm', queryMatchTextarea.value));
-                    _groupSeasonPair.appendChild(queryMatchTextarea);
-                }
+            const _obtainSeasonFromSelect = document.createElement('select');
+            for (i = 0; i < fromOptions.length; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = fromOptions[i];
+                if (settings.os == i) opt.selected = true;
+                _obtainSeasonFromSelect.appendChild(opt);
             }
+            _obtainSeasonFromSelect.addEventListener('change', () => {
+                updateDomainSetting(trackedDomains, domain, 'ot', parseInt(_obtainSeasonFromSelect.value))
+                if (settings.os == 2) {
+                    querySeasonMatchLabel.style.display = 'block';
+                    querySeasonMatchTextarea.style.display = 'block';
+                } else {
+                    querySeasonMatchLabel.style.display = 'none';
+                    querySeasonMatchTextarea.style.display = 'none';
+                }
+            });
+            _groupSeasonPair.appendChild(_obtainSeasonFromSelect);
+
+            const querySeasonMatchLabel = document.createElement('label');
+            querySeasonMatchLabel.textContent = 'Query Session (CSS Selector or Regex):';
+            _groupSeasonPair.appendChild(querySeasonMatchLabel);
+
+            const querySeasonMatchTextarea = document.createElement('textarea');
+            querySeasonMatchTextarea.value = settings.osm; // Load existing query or leave blank
+            querySeasonMatchTextarea.addEventListener('input', () => updateDomainSetting(trackedDomains, domain, 'osm', querySeasonMatchTextarea.value));
+            if (settings.os == 2) {
+                querySeasonMatchLabel.style.display = 'block';
+                querySeasonMatchTextarea.style.display = 'block';
+            } else {
+                querySeasonMatchLabel.style.display = 'none';
+                querySeasonMatchTextarea.style.display = 'none';
+            }
+            _groupSeasonPair.appendChild(querySeasonMatchTextarea);
             _groupObtain.appendChild(_groupSeasonPair);
 
             const _groupEpisodePair = document.createElement('div');
             _groupEpisodePair.classList.add('settings-pair');
 
-            {
-                // Create "Obtain Title From" dropdown
-                const _obtainFromLabel = document.createElement('label');
-                _obtainFromLabel.textContent = 'Obtain Episode From:';
-                _groupEpisodePair.appendChild(_obtainFromLabel);
+            // ====================================
+            // Create "Obtain Episode From" dropdown
+            // ====================================
+            const _obtainEpisodeFromLabel = document.createElement('label');
+            _obtainEpisodeFromLabel.textContent = 'Obtain Episode From:';
+            _groupEpisodePair.appendChild(_obtainEpisodeFromLabel);
 
-                const _obtainFromSelect = document.createElement('select');
-                for (i = 0; i < fromOptions.length; i++) {
-                    const opt = document.createElement('option');
-                    opt.value = i;
-                    opt.textContent = fromOptions[i];
-                    if (settings.ot == i) opt.selected = true;
-                    _obtainFromSelect.appendChild(opt);
-                }
-                _obtainFromSelect.addEventListener('change', () => updateDomainSetting(trackedDomains, domain, 'ot', parseInt(_obtainFromSelect.value)));
-                _groupEpisodePair.appendChild(_obtainFromSelect);
-
-                if (settings.oe == 2) {
-                    // Add "HTML Query Match" input
-                    const queryMatchLabel = document.createElement('label');
-                    queryMatchLabel.textContent = 'Query Episode (CSS Selector or Regex):';
-                    _groupEpisodePair.appendChild(queryMatchLabel);
-
-                    const queryMatchTextarea = document.createElement('textarea');
-                    queryMatchTextarea.value = settings.oem; // Load existing query or leave blank
-                    queryMatchTextarea.addEventListener('input', () => updateDomainSetting(trackedDomains, domain, 'oem', queryMatchTextarea.value));
-                    _groupEpisodePair.appendChild(queryMatchTextarea);
-                }
+            const _obtainEpisodeFromSelect = document.createElement('select');
+            for (i = 0; i < fromOptions.length; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = fromOptions[i];
+                if (settings.oe == i) opt.selected = true;
+                _obtainEpisodeFromSelect.appendChild(opt);
             }
+            _obtainEpisodeFromSelect.addEventListener('change', () => {
+                updateDomainSetting(trackedDomains, domain, 'ot', parseInt(_obtainEpisodeFromSelect.value))
+                if (settings.oe == 2) {
+                    queryEpisodeMatchLabel.style.display = 'block';
+                    queryEpisodeMatchTextarea.style.display = 'block';
+                } else {
+                    queryEpisodeMatchLabel.style.display = 'none';
+                    queryEpisodeMatchTextarea.style.display = 'none';
+                }
+            });
+            _groupEpisodePair.appendChild(_obtainEpisodeFromSelect);
+
+            const queryEpisodeMatchLabel = document.createElement('label');
+            queryEpisodeMatchLabel.textContent = 'Query Episode (CSS Selector or Regex):';
+            _groupEpisodePair.appendChild(queryEpisodeMatchLabel);
+
+            const queryEpisodeMatchTextarea = document.createElement('textarea');
+            queryEpisodeMatchTextarea.value = settings.oem; // Load existing query or leave blank
+            queryEpisodeMatchTextarea.addEventListener('input', () => updateDomainSetting(trackedDomains, domain, 'oem', queryEpisodeMatchTextarea.value));
+            if (settings.oe == 2) {
+                queryEpisodeMatchLabel.style.display = 'block';
+                queryEpisodeMatchTextarea.style.display = 'block';
+            } else {
+                queryEpisodeMatchLabel.style.display = 'none';
+                queryEpisodeMatchTextarea.style.display = 'none';
+            }
+            _groupEpisodePair.appendChild(queryEpisodeMatchTextarea);
             _groupObtain.appendChild(_groupEpisodePair);
             _settings.appendChild(_groupObtain);
 
+            // ====================================
+            // Create "Extra" options
+            // ====================================
             const _groupExtras = document.createElement('div');
             _groupExtras.classList.add('settings-group');
 
@@ -226,13 +271,16 @@ function loadDomainSettings() {
             // moveToSelect.addEventListener('change', () => moveEpisodes(trackedDomains, domain, moveToSelect.value));
             _settings.appendChild(_moveToSelect);
 
+            // ====================================
+            // Create "Move All" options
+            // ====================================
             const _moveToButton = document.createElement('button');
             _moveToButton.textContent = 'Move All';
             _moveToButton.addEventListener('click', (event) => {
                 event.stopPropagation();
                 event.preventDefault();
 
-                moveEpisodes(trackedDomains, domain, moveToSelect.value);
+                moveEpisodes(trackedDomains, domain, _moveToSelect.value);
                 window.location.reload();
             });
             _settings.appendChild(_moveToButton);
@@ -485,7 +533,8 @@ function moveEpisodes(Domains, fromDomain, toDomain) {
                         // episodes[id].c = Domains[toDomain].c; // Transfer category
                     }
                 }
-                console.log(`Domains after transfer:`, episodes);
+                console.log(`Episodes in ${fromDomain} after transfer:`, Object.fromEntries(Object.entries(episodes).filter(([id, ep]) => ep.d === Domains[fromDomain].i)));
+                console.log(`Episodes in ${toDomain} after transfer:`, Object.fromEntries(Object.entries(episodes).filter(([id, ep]) => ep.d === Domains[toDomain].i)));
                 saveEpisodes(episodes);
             });
     }
