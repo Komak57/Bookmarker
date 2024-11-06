@@ -639,7 +639,7 @@ function addEpisodeToStorage(jikan, tab, settings) {
                 }
             } else {
                 // Add the episode if it is Episode 1, or we're ignoring episode match, or we're forcably adding the episode
-                if (jikan.e === 1 || settings.ie || settings.forced) {
+                if (parseInt(jikan.e) === 1 || settings.ie || settings.forced) {
                     //const domainID = Domains[domain].i;
                     episodes[jikan.id] = {
                         c: settings.c, // Match Domain Filter

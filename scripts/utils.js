@@ -2,9 +2,9 @@
 const yearRegex = /[^a-z0-9]\b([12][90][0-9][0-9])\b[^a-z0-9]/i;
 const seasonRegex_Rigid = /(?:(?:season|s)(\d+)|(\d+)[- ]?(?:th|rd|nd|st)?[- ]?(season|s))/i;
 //const seasonRegex_Soft = /(?:[^\d]|^)(\d+)[- ]?(?:th|nd|st)?[- ]?season(?:[^\d]|$)/i;
-const episodeRegex_Rigid = /(?:episode|ep|e|part|chapter|ch)?[- ]?(\d+(?:[a-z.]?\d+))$/i;
-const episodeRegex_Simple = /(?:episode|ep|e|part|chapter|ch)?[- ]?(\d+(?:[a-z.]?\d+))\b/i;
-const episodeRegex_Soft = /\b(\d+[a-z]?)\b/i;
+const episodeRegex_Rigid = /(?:episode|ep|e|part|chapter|ch)?[- ]?(\d+(?:[a-z.]?\d+)?)$/i;
+const episodeRegex_Simple = /(?:episode|ep|e|part|chapter|ch)?[- ]?(\d+(?:[a-z.]?\d+)?)\b/i;
+const episodeRegex_Soft = /\b(\d+(?:[a-z.]?\d+)?)\b/i;
 const subRegex = /^(?:[^.]+\.)?([^.]+\.[^/]+.*$)/i;
 
 // options.js
