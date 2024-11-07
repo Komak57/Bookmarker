@@ -259,7 +259,7 @@ async function showTrackButton(domain) {
 
     trackButton.addEventListener('click', () => {
         chrome.permissions.request({
-            origins: [urlPattern]
+            origins: [URL_PATTERN.replace('$d', domain)]
         }, (granted) => {
             // The callback argument will be true if the user granted the permissions.
             if (granted) {
