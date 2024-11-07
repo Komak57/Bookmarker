@@ -269,7 +269,7 @@ function VersionUpdate() {
                                     console.log(`Updated all episodes to implement released episode counts Required for v1.3`);
                                     // We'll update to manifestData.version anyways
                                     if (`${major}.${minor}` != `${_major}.${_minor}`)
-                                        saveVersion('1.3');
+                                        saveVersion('1.3.0');
                                 case `${_major}.${_minor}`:
                                     console.log(`No Further Changes Required for v${manifestData.version}`);
                                     saveVersion(manifestData.version);

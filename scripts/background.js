@@ -137,49 +137,6 @@ async function addEpisode(domain, settings, tab) {
             return;
         }
         const data = getFromAPI(details, tab, settings);
-        // // Get title from API - https://api.jikan.moe/v4/anime?q=
-        // fetchJikan(details, settings)
-        //     .then(ret => {
-        //         if (!ret.json.data[0]) {
-        //             console.error(`JIKAN Data[0] not Found`);
-        //             return;
-        //         }
-        //         const jikan = {
-        //             id: ret.json.data[0].mal_id,
-        //             c: 0, // Anime
-        //             d: settings.i, // TODO: Get Domain ID
-        //             f: 0,
-        //             t: details.title,
-        //             e: details.episode,
-        //             n: ret.json.data[0].episodes,
-        //             p: ret.json.data[0].images.jpg.small_image_url, // TODO: Get Thumbnail
-        //             l: "tab.url", // URL Last Viewed
-        //             u: Date.now() // Track the time it was viewed
-        //         };
-        //         // Try to get Title from Jikan.
-        //         // NOTE: It can be in an array called "Titles", or as a collection of objects called "title(_language?)"
-        //         const titles = ret.json.data[0].titles;
-        //         if (titles) {
-        //             // Check array of titles for english title
-        //             let title = titles[0].title;
-        //             jikan.t = title[0]; // Default to first-found (usually Default)
-        //             titles.forEach(t => {
-        //                 if (t.type == "English") // Found english
-        //                     jikan.t = t.title;
-        //                 // title = t.title;
-        //             });
-        //             console.log(`JIKAN Success: ${jikan.id} / ${jikan.title}`);
-        //         } else {
-        //             if (ret.json.data[0].title) // default
-        //                 jikan.t = ret.json.data[0].title;
-        //             if (ret.json.data[0].title_english) // english
-        //                 jikan.t = ret.json.data[0].title_english;
-        //         }
-        //         // replace title
-        //         // ret.data.title = title;
-        //         addEpisodeToStorage(jikan, tab, settings);
-        //     })
-        //     .catch(error => console.error(`JIKAN Error: ${error}`));
     }
 }
 

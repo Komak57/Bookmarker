@@ -325,7 +325,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     const currentDomain = getDomainFromUrl(currentTab.url);
 
     // const Domains = getDomains();
-    getDomains().then((Domains) => {
+    getDomains().then(async(Domains) => {
         const titleElem = document.getElementById('hostname');
 
         const spanElem = document.createElement("span");
@@ -335,10 +335,17 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         titleElem.appendChild(spanElem);
 
         if (Domains && Domains.hasOwnProperty(currentDomain)) {
-            const tabs = document.getElementById('tabs');
-            tabs.style.display = "block";
-            showTrackEpButton(currentDomain, currentTab.id, currentTab.url, currentTab.title);
-            displayEpisodes(currentDomain, currentTab.url);
+            // Make sure we still have permissions for this domain
+            const urlPattern = `https://*.${currentDomain}/*`;
+            const alreadyHasPermission = await hasPermission(urlPattern);
+            if (alreadyHasPermission) {
+                const tabs = document.getElementById('tabs');
+                tabs.style.display = "block";
+                showTrackEpButton(currentDomain, currentTab.id, currentTab.url, currentTab.title);
+                displayEpisodes(currentDomain, currentTab.url);
+            } else {
+                showTrackButton(currentDomain);
+            }
         } else {
             showTrackButton(currentDomain);
         }
