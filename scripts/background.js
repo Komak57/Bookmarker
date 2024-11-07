@@ -31,7 +31,8 @@ importScripts('utils.js');
         int f       -- Finished watching
         string t    -- *Title
         int e       -- Active Episode
-        int n       -- *Current number of Episodes
+        int r       -- *Released episodes
+        int n       -- *Max contracted episodes
         string p    -- *Thumbnail URL
         string l    -- Link to URL last viewed (without domain)
         string u    -- last updated
@@ -189,45 +190,50 @@ function getFromAPI(details, tab, settings) {
             {
                 // Get title from API - https://api.jikan.moe/v4/anime?q=
                 fetchJikanAnime(details)
-                .then(ret => {
-                    if (!ret.json.data[0]) {
+                .then(retA => {
+                    if (!retA.json.data[0]) {
                         console.error(`JIKAN Data[0] not Found searching ${tab.url}`);
                         return;
                     }
-                    const jikan = {
-                        id: ret.json.data[0].mal_id,
-                        c: settings.c, // Anime
-                        d: settings.i,
-                        f: 0,
-                        t: details.title,
-                        e: details.episode,
-                        n: ret.json.data[0].episodes,
-                        p: ret.json.data[0].images.jpg.small_image_url,
-                        l: "tab.url", // URL Last Viewed
-                        u: Date.now() // Track the time it was viewed
-                    };
-                    // Try to get Title from Jikan.
-                    // NOTE: It can be in an array called "Titles", or as a collection of objects called "title(_language?)"
-                    const titles = ret.json.data[0].titles;
-                    if (titles) {
-                        // Check array of titles for english title
-                        let title = titles[0].title;
-                        jikan.t = title; // Default to first-found (usually Default)
-                        titles.forEach(t => {
-                            if (t.type == "English") // Found english
-                                jikan.t = t.title;
-                            // title = t.title;
+                    fetchJikanAnimeEpisodes(retA.json.data[0].mal_id)
+                        .then(retEp => {
+                            console.log(`JIKAN Found ${retEp.json.data.length} episodes for ${retA.json.data[0].mal_id}`);
+                            const jikan = {
+                                id: retA.json.data[0].mal_id,
+                                c: settings.c, // Anime
+                                d: settings.i,
+                                f: 0,
+                                t: details.title,
+                                e: details.episode,
+                                r: retEp.json.data.length,
+                                n: retA.json.data[0].episodes,
+                                p: retA.json.data[0].images.jpg.small_image_url,
+                                l: "tab.url", // URL Last Viewed
+                                u: Date.now() // Track the time it was viewed
+                            };
+                            // Try to get Title from Jikan.
+                            // NOTE: It can be in an array called "Titles", or as a collection of objects called "title(_language?)"
+                            const titles = retA.json.data[0].titles;
+                            if (titles) {
+                                // Check array of titles for english title
+                                let title = titles[0].title;
+                                jikan.t = title; // Default to first-found (usually Default)
+                                titles.forEach(t => {
+                                    if (t.type == "English") // Found english
+                                        jikan.t = t.title;
+                                    // title = t.title;
+                                });
+                                console.log(`JIKAN Success: ${jikan.id} / ${jikan.t}`);
+                            } else {
+                                if (retA.json.data[0].title) // default
+                                    jikan.t = retA.json.data[0].title;
+                                if (retA.json.data[0].title_english) // english
+                                    jikan.t = retA.json.data[0].title_english;
+                            }
+                            // replace title
+                            // ret.data.title = title;
+                            addEpisodeToStorage(jikan, tab, settings);
                         });
-                        console.log(`JIKAN Success: ${jikan.id} / ${jikan.t}`);
-                    } else {
-                        if (ret.json.data[0].title) // default
-                            jikan.t = ret.json.data[0].title;
-                        if (ret.json.data[0].title_english) // english
-                            jikan.t = ret.json.data[0].title_english;
-                    }
-                    // replace title
-                    // ret.data.title = title;
-                    addEpisodeToStorage(jikan, tab, settings);
                 })
                 .catch(error => console.error(`JIKAN Error: ${error}`));
                 break;
@@ -248,6 +254,7 @@ function getFromAPI(details, tab, settings) {
                         f: 0,
                         t: details.title,
                         e: details.episode,
+                        r: details.episode,
                         n: ret.json.data[0].chapters, // Jikan uses chapters for anime, not episodes
                         p: ret.json.data[0].images.jpg.small_image_url,
                         l: "tab.url", // URL Last Viewed
@@ -293,6 +300,7 @@ function getFromAPI(details, tab, settings) {
                     f: 0,
                     t: details.title,
                     e: details.episode,
+                    r: details.episode,
                     n: details.episode,
                     p: "", // Empty thumbnail removes it from the Episode Card
                     l: "tab.url", // URL Last Viewed
@@ -506,6 +514,27 @@ async function fetchJikanAnime(details) {
         return { data: details, json: null };
     }
 }
+async function fetchJikanAnimeEpisodes(animeID) {
+    const url = `https://api.jikan.moe/v4/anime/${animeID}/episodes`;
+    console.log(`Attempting JIKAN API: ${url}`);
+
+    try {
+        const response = await fetch(url); // Await the fetch response
+        console.log('Response status:', response.status); // Should log the status code
+
+        if (response.ok) { // Checks if status is in the range 200-299
+            const json = await response.json(); // Parse JSON if response is successful
+            console.log(`JIKAN: Data Retrieved`);
+            return { animeID: animeID, json: json };
+        } else {
+            console.error(`Bad response from JIKAN: ${response.status}`);
+            return { animeID: animeID, json: json };
+        }
+    } catch (error) {
+        console.error('Fetch error:', error); // Handle network errors
+        return { animeID: animeID, json: null };
+    }
+}
 async function fetchJikanManga(details) {
     const url = `https://api.jikan.moe/v4/manga?q=${encodeURIComponent(details.title)}&limit=1`;
     console.log(`Attempting JIKAN API: ${url}`);
@@ -584,6 +613,7 @@ function addEpisodeToStorage(jikan, tab, settings) {
                     episodes[jikan.id].l = tab.url; // update URL
                     // episodes[data.title].season = data.season; // fix season in case we changed matching parameters
                     episodes[jikan.id].e = jikan.e;
+                    episodes[jikan.id].r = jikan.e;
                     episodes[jikan.id].f = jikan.f;
                     episodes[jikan.id].u = Date.now();
                     console.log(`Updated: ${jikan.id} - Episode ${jikan.e}`);
@@ -647,6 +677,7 @@ function addEpisodeToStorage(jikan, tab, settings) {
                         f: jikan.f,
                         t: jikan.t,
                         e: jikan.e,
+                        r: jikan.e,
                         n: jikan.n,
                         p: jikan.p,
                         l: new URL(tab.url).pathname, // URL Last Viewed

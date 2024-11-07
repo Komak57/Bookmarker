@@ -118,7 +118,15 @@ async function displayEpisodes(domain, url) {
                             const details = document.createElement("div");
                             details.classList.add("episode-details");
                             const det_span1 = document.createElement("span");
-                            det_span1.textContent = `Episode ${episode.e} of ${episode.n}`;
+                            if (episode.c == 0)
+                                if (episode.n == null)
+                                    det_span1.textContent = `Episode ${episode.e} of ${episode.r} (??)`;
+                                else
+                                    det_span1.textContent = `Episode ${episode.e} of ${episode.r} (${episode.n})`;
+                            else if (episode.c == 1)
+                                det_span1.textContent = `Chapter ${episode.e}`;
+                            else
+                                det_span1.textContent = `Episode ${episode.e}`;
                             const det_span2 = document.createElement("span");
                             det_span2.textContent = `Updated ${new Date(episode.u).toLocaleString()}`;
                             details.appendChild(det_span1);
@@ -216,18 +224,60 @@ function switchTab(event) {
         episodesCompletedTab.classList.add('active');
     }
 }
+
 // Show button to track the domain
-function showTrackButton(domain) {
+async function showTrackButton(domain) {
+    const urlPattern = `https://*.${domain}/*`;
     const contentDiv = document.getElementById('content');
+    contentDiv.textContent = ``;
+
+    const episodeListItem = document.createElement("li");
+    episodeListItem.classList.add("episode-item");
+
+    const episodeCard = document.createElement("a");
+    episodeCard.classList.add("episode-card");
+
+    const episodeInfo = document.createElement("div");
+    episodeInfo.classList.add("episode-info");
+
+    const title = document.createElement("div");
+    title.classList.add("episode-warning");
+    const alreadyHasPermission = await hasPermission(urlPattern);
+    if (alreadyHasPermission)
+        title.textContent = ``;
+    else
+        title.textContent = `This Extension requires permissions to read/write on this domain for the purposes of finding titles, episode/chapter numbers, and related text in the page content.`;
+    episodeInfo.appendChild(title);
+
+    const details = document.createElement("div");
+    details.classList.add("warning-details");
+
     const trackButton = document.createElement('button');
-    trackButton.textContent = `Track ${domain}`;
+    if (alreadyHasPermission)
+        trackButton.textContent = `Track ${domain}`;
+    else
+        trackButton.textContent = `Request Permission`;
 
     trackButton.addEventListener('click', () => {
-        chrome.runtime.sendMessage({ action: 'trackDomain', domain: domain });
-        contentDiv.textContent = `${domain} is now being tracked. Reload to view episodes.`;
+        chrome.permissions.request({
+            origins: [urlPattern]
+        }, (granted) => {
+            // The callback argument will be true if the user granted the permissions.
+            if (granted) {
+                chrome.runtime.sendMessage({ action: 'trackDomain', domain: domain });
+                contentDiv.textContent = `${domain} is now being tracked. Reload to view episodes.`;
+            } else {
+                console.log(`Domain Permissions Refused for ${domain}`);
+                contentDiv.textContent = `Domain Permissions Refused for ${domain}`;
+            }
+        });
     });
+    details.appendChild(trackButton);
 
-    contentDiv.appendChild(trackButton);
+    episodeInfo.appendChild(details);
+    episodeCard.appendChild(episodeInfo);
+    episodeListItem.appendChild(episodeCard);
+    contentDiv.appendChild(episodeListItem);
 }
 
 // Show button to track the domain

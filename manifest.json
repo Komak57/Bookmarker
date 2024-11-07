@@ -2,14 +2,18 @@
     "manifest_version": 3,
     "name": "Bookmarker",
     "description": "Auto-tracking of manga and anime",
-    "version": "1.2.2",
+    "version": "1.3.0",
     "permissions": [
         "contextMenus",
         "tabs",
+        "activeTab",
         "webNavigation",
         "storage",
         "notifications",
         "scripting"
+    ],
+    "optional_host_permissions": [
+        "<all_urls>"
     ],
     "icons": {
         "16": "icons/icon16.png",
@@ -27,8 +31,5 @@
         "resources": ["notification.js"],
         "matches": ["<all_urls>"]
     }],
-    "options_page": "options.html",
-    "host_permissions": [
-        "<all_urls>"
-    ]
+    "options_page": "options.html"
 }

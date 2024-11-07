@@ -18,6 +18,15 @@ function delayExecution(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+function hasPermission(urlPattern) {
+    return new Promise((resolve) => {
+        chrome.permissions.contains({ origins: [urlPattern] },
+            (result) => {
+                resolve(result);
+            }
+        );
+    });
+}
 async function getVersion() {
     return new Promise((resolve, reject) => {
         // Load tracked domains
@@ -114,6 +123,7 @@ async function getEpisodes() {
                                     f: 0,
                                     t: `Title ${id}`,
                                     e: cloudEpisodes[id].e,
+                                    r: cloudEpisodes[id].e,
                                     n: cloudEpisodes[id].e,
                                     p: "",
                                     l: cloudEpisodes[id].l,
@@ -237,39 +247,56 @@ function VersionUpdate() {
     // const lastVersion = getVersion() || "null";
     getVersion().then((lastVersion) => {
         const manifestData = chrome.runtime.getManifest();
-
         if (lastVersion != manifestData.version) {
             console.log("Attempting to update outdated variables for v", lastVersion);
 
-            switch (lastVersion) {
-                case '1.2.0': // 1.2.0
-                    console.log(`No Changes Required for v1.2.0`);
-                    saveVersion('1.2.0');
-                case manifestData.version:
-                    console.log(`No Changes Required for v${manifestData.version}`);
-                    saveVersion(manifestData.version);
-                    break;
-                default:
-                    console.log(`Version Update could not patch from v${lastVersion} to ${manifestData.version}`);
-                    // // Purge all save-data
-                    // chrome.storage.local.clear(() => {
-                    //     if (chrome.runtime.lastError) {
-                    //         console.error("Error clearing chrome.storage.local:", chrome.runtime.lastError);
-                    //     } else {
-                    //         console.log("All data cleared from chrome.storage.local.");
-                    //     }
-                    // });
-                    // chrome.storage.sync.clear(() => {
-                    //     if (chrome.runtime.lastError) {
-                    //         console.error("Error clearing chrome.storage.sync:", chrome.runtime.lastError);
-                    //     } else {
-                    //         console.log("All data cleared from chrome.storage.sync.");
-                    //     }
-                    // });
-                    saveVersion('manifestData.version');
-            }
+            getDomains()
+                .then((domains) => {
+                    getEpisodes()
+                        .then((episodes) => {
+                            [major, minor, patch] = lastVersion.split('.');
+                            [_major, _minor, _patch] = manifestData.version.split('.');
+                            switch (`${major}.${minor}`) {
+                                case '1.2': // 1.2.0
+                                    console.log(`No Changes Required for v1.2`);
+                                    saveVersion('1.2.0');
+                                case '1.3': // 1.3.0
+                                    for (let id in episodes) {
+                                        // Update episode to add current number of episodes
+                                        episodes[id]['r'] = episodes[id].e;
+                                    }
+                                    saveEpisodes(episodes);
+                                    console.log(`Updated all episodes to implement released episode counts Required for v1.3`);
+                                    // We'll update to manifestData.version anyways
+                                    if (`${major}.${minor}` != `${_major}.${_minor}`)
+                                        saveVersion('1.3');
+                                case `${_major}.${_minor}`:
+                                    console.log(`No Further Changes Required for v${manifestData.version}`);
+                                    saveVersion(manifestData.version);
+                                    break;
+                                default:
+                                    console.log(`Version Update could not patch from v${lastVersion} to ${manifestData.version}`);
+                                    // // Purge all save-data
+                                    // chrome.storage.local.clear(() => {
+                                    //     if (chrome.runtime.lastError) {
+                                    //         console.error("Error clearing chrome.storage.local:", chrome.runtime.lastError);
+                                    //     } else {
+                                    //         console.log("All data cleared from chrome.storage.local.");
+                                    //     }
+                                    // });
+                                    // chrome.storage.sync.clear(() => {
+                                    //     if (chrome.runtime.lastError) {
+                                    //         console.error("Error clearing chrome.storage.sync:", chrome.runtime.lastError);
+                                    //     } else {
+                                    //         console.log("All data cleared from chrome.storage.sync.");
+                                    //     }
+                                    // });
+                                    saveVersion('manifestData.version'); // Assume current version
+                            }
+                        });
+                });
         } else {
             console.log(`Version v${lastVersion} already up to date.`);
         }
-    })
+    });
 }

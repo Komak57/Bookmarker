@@ -92,10 +92,23 @@
             margin-bottom: 5px;
             /* color: #333; */
             color: rgb(121 161 255);
-            /* Limit title size */
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-height: 40px;
+        }
+        
+        .episode-warning {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            /* color: #333; */
+            color: rgb(121 161 255);
+            text-align: center;
+        }
+        
+        .warning-details {
+            font-size: 12px;
+            /* color: #666; */
+            color: rgb(103 103 103);
+            display: flex;
+            justify-content: center;
         }
         /* Tooltip style */
         
@@ -178,6 +191,7 @@
             padding: 3px;
             display: flex;
             justify-content: space-between;
+            width: -webkit-fill-available;
         }
         
         .completed-icon {
