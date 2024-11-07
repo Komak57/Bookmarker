@@ -40,7 +40,6 @@ importScripts('utils.js');
 chrome.runtime.onInstalled.addListener(function(details) {
     if (details.reason === "update") {
         const currentVersion = chrome.runtime.getManifest().version;
-
         // Purge all save-data
         // chrome.storage.local.clear(() => {
         //     if (chrome.runtime.lastError) {
@@ -661,58 +660,8 @@ function addEpisodeToStorage(jikan, tab, settings) {
         });
 }
 
-// Add episode to tracking (forced)
-// function trackEpisode(domain, document, tab, settings) {
-//     const data = getDetails(domain, document, tab, settings);
-//     //const { matched, title, season, episode } = getEpisodeDetails(((settings.obtainTitleFrom == 2) ? tab.title : tab.url).trim().toLowerCase(), settings);
-
-//     // TODO: Get title from API - https://api.jikan.moe/v4/anime?q=
-//     fetchJikan(data)
-//         .then(ret => {
-//             if (!ret.json.data[0]) {
-//                 console.error(`JIKAN Data[0] not Found`);
-//                 return;
-//             }
-//             const id = ret.json.data[0].mal_id;
-//             const titles = ret.json.data[0].titles;
-//             let title = titles[0].title;
-//             titles.forEach(t => {
-//                 if (t.type == "English")
-//                     title = t.title;
-//             });
-//             console.log(`JIKAN Success: ${id} / ${title}`);
-//             // replace title
-//             ret.data.title = title;
-
-//             getEpisodes().then((episodes) => {
-
-//                 var isnew = (episodes[ret.data.title]) ? false : true;
-
-//                 episodes[ret.data.title] = {
-//                     domain: domain,
-//                     url: tab.url,
-//                     title: ret.data.title,
-//                     season: ret.data.season,
-//                     episode: ret.data.episode,
-//                     completed: ret.data.completed,
-//                     viewedAt: Date.now() // Track the time it was viewed
-//                 };
-//                 saveEpisodes(episodes);
-//                 // Save the updated list of episodes
-//                 // chrome.storage.local.set({ episodes }, () => {
-//                 //     if (isnew) {
-//                 //         console.log(`Force Added: ${ret.data.title} - Season ${ret.data.season}, Episode ${ret.data.episode}`);
-//                 //     } else {
-//                 //         console.log(`Force Updated: ${ret.data.title} - Season ${ret.data.season}, Episode ${ret.data.episode}`);
-//                 //     }
-//                 //     console.log('Episodes after adding:', episodes);
-//                 // });
-//             });
-//         })
-//         .catch(error => console.error(`JIKAN Error: ${error}`));
-// }
-
 // Create an ID 1 incremented from the highest ID in Domains
+// TODO: Check all episodes for existing ID's, or save a variable for the new unique id
 function createDomainId(Domains) {
     let max = 0;
     for (let domain in Domains) {

@@ -242,6 +242,54 @@ function isEpisodeSequential(newEpisode, savedEpisode) {
     }
 }
 
+function exportAsCSV() {
+    getDomains()
+        .then((domains) => {
+            getEpisodes()
+                .then((episodes) => {
+                    if (chrome.runtime.lastError) {
+                        console.error("Error retrieving data:", chrome.runtime.lastError);
+                        return;
+                    }
+                    // Generate Header
+                    csvContent = "\nDomains\nDomain,ID,Cat,ObtainTitleFrom,TitleMatch,ObtainSeasonFrom,SeasonMatch,ObtainEpisodeFrom,EpisodeMatch,IgnoreEpisode,Notify,SortBy\n";
+
+                    // Process Domains
+                    for (const [domain, settings] of Object.entries(domains)) {
+                        const row = `${domain},${settings.i || 'null'},${settings.c || '0'},${settings.ot || '0'},${settings.otm || ''},${settings.os || '0'},${settings.osm || ''},${settings.oe || '0'},${settings.oem || ''},${settings.ie || 'false'},${settings.n || 'true'},${settings.s || '0'}`; // Customize fields
+                        csvContent += row + "\n";
+                    }
+
+                    // Generate Header
+                    csvContent += "\nEpisodes\nID,Cat,DomainID,Title,Episode,Released,Episodes,Thumbnail,URL,Finished,Updated\n";
+
+                    // Process Episodes
+                    for (const [id, episode] of Object.entries(episodes)) {
+                        const row = `${id},${id || 'null'},${episode.c || '0'},${episode.d || 'null'},${episode.t || ''},${episode.e || '1'},${episode.r || '0'},${episode.n || '0'},${episode.p || ''},${episode.f || 'false'},${episode.u || 'null'}`; // Customize fields
+                        csvContent += row + "\n";
+                    }
+
+                    // Trigger CSV download
+                    downloadCSV(csvContent, "exported_data.csv");
+                });
+        });
+}
+
+function downloadCSV(content, filename) {
+    const blob = new Blob([content], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    URL.revokeObjectURL(url); // Clean up
+}
+
 // Version Updater to fix bugs when changes are made
 function VersionUpdate() {
     // const lastVersion = getVersion() || "null";
@@ -291,7 +339,7 @@ function VersionUpdate() {
                                     //         console.log("All data cleared from chrome.storage.sync.");
                                     //     }
                                     // });
-                                    saveVersion('manifestData.version'); // Assume current version
+                                    saveVersion(manifestData.version); // Assume current version
                             }
                         });
                 });
