@@ -37,8 +37,8 @@ async function displayEpisodes(domain, url) {
             // const episodes = getEpisodes();
             getEpisodes()
                 .then((episodes) => {
-                    console.log('Filtering Episodes from :', episodes);
-                    console.log(`Filtering Episodes for DomainID ${settings.i} `);
+                    log('log', 'Filtering Episodes from :', episodes);
+                    log('log', `Filtering Episodes for DomainID ${settings.i} `);
                     let domainEpisodes = [];
                     switch (settings.c) {
                         case 2:
@@ -55,7 +55,7 @@ async function displayEpisodes(domain, url) {
                     // Filter episodes to this domain only
                     // const domainEpisodes = Object.fromEntries(Object.entries(episodes).filter(([id, ep]) => ep.d === settings.i));
                     // const domainEpisodes = Object.values(episodes).filter(ep => ep.d === settings.i);
-                    console.log(`${Object.keys(domainEpisodes).length} Episodes to Display:`, domainEpisodes);
+                    log('log', `${Object.keys(domainEpisodes).length} Episodes to Display:`, domainEpisodes);
                     // Filter episodes to this category only
                     // const domainEpisodes = Object.values(episodes).filter(ep => ep.c === settings.c);
 
@@ -86,7 +86,7 @@ async function displayEpisodes(domain, url) {
                         // for (let id in episodesArray) {
                         //     const episode = episodes[id];
                         episodesArray.forEach(([id, episode]) => {
-                            // console.log('Rendering: ', episode.t);
+                            // log('log','Rendering: ', episode.t);
                             const episodeListItem = document.createElement("li");
                             episodeListItem.classList.add("episode-item");
 
@@ -207,7 +207,7 @@ async function displayEpisodes(domain, url) {
 function toggleComplete(episodes, id) {
     episodes[id].f = !episodes[id].f;
 
-    console.log(`Episode ${episodes[id].t} set to ${episodes[id].f? 'completed' : 'incomplete'}.`);
+    log('log', `Episode ${episodes[id].t} set to ${episodes[id].f? 'completed' : 'incomplete'}.`);
 }
 
 // Switch between "All Episodes" and "Completed Episodes" tab
@@ -227,7 +227,6 @@ function switchTab(event) {
 
 // Show button to track the domain
 async function showTrackButton(domain) {
-    const urlPattern = `https://*.${domain}/*`;
     const contentDiv = document.getElementById('content');
     contentDiv.textContent = ``;
 
@@ -242,7 +241,7 @@ async function showTrackButton(domain) {
 
     const title = document.createElement("div");
     title.classList.add("episode-warning");
-    const alreadyHasPermission = await hasPermission(urlPattern);
+    const alreadyHasPermission = await hasPermission(URL_PATTERN.replace('$d', domain));
     if (alreadyHasPermission)
         title.textContent = ``;
     else
@@ -267,7 +266,7 @@ async function showTrackButton(domain) {
                 chrome.runtime.sendMessage({ action: 'trackDomain', domain: domain });
                 contentDiv.textContent = `${domain} is now being tracked. Reload to view episodes.`;
             } else {
-                console.log(`Domain Permissions Refused for ${domain}`);
+                log('log', `Domain Permissions Refused for ${domain}`);
                 contentDiv.textContent = `Domain Permissions Refused for ${domain}`;
             }
         });
@@ -322,7 +321,7 @@ function showTrackEpButton(domain, tabId, url, title) {
                 Domains[domain].s = 0;
 
             saveDomains(Domains);
-            console.log(`Sorting cycled to ${sortBy[Domains[domain].s]} for ${domain}`);
+            log('log', `Sorting cycled to ${sortBy[Domains[domain].s]} for ${domain}`);
             window.location.reload(); // Force full page reload of popup.html
         });
     });
@@ -347,8 +346,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
 
         if (Domains && Domains.hasOwnProperty(currentDomain)) {
             // Make sure we still have permissions for this domain
-            const urlPattern = `https://*.${currentDomain}/*`;
-            const alreadyHasPermission = await hasPermission(urlPattern);
+            const alreadyHasPermission = await hasPermission(URL_PATTERN.replace('$d', currentDomain));
             if (alreadyHasPermission) {
                 const tabs = document.getElementById('tabs');
                 tabs.style.display = "block";

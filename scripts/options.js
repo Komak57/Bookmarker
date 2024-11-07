@@ -292,7 +292,7 @@ function loadDomainSettings() {
 
 // Function to update domain setting
 function updateDomainSetting(trackedDomains, domain, settingKey, newValue) {
-    console.log(`Updating ${settingKey} to ${newValue}`);
+    log('log', `Updating ${settingKey} to ${newValue}`);
     if (trackedDomains[domain]) {
         trackedDomains[domain][settingKey] = newValue;
         saveDomains(trackedDomains);
@@ -316,7 +316,7 @@ function moveEpisodes(Domains, fromDomain, toDomain) {
         // Logic to transfer episodes between domains
         const fID = Domains[fromDomain].i;
         const tID = Domains[toDomain].i;
-        console.log(`Moving episodes from ${fromDomain}(${fID}) to ${toDomain}(${tID})`);
+        log('log', `Moving episodes from ${fromDomain}(${fID}) to ${toDomain}(${tID})`);
         // You can implement logic here to update the stored data and transfer the episodes
         getEpisodes()
             .then((episodes) => {
@@ -326,8 +326,8 @@ function moveEpisodes(Domains, fromDomain, toDomain) {
                         // episodes[id].c = Domains[toDomain].c; // Transfer category
                     }
                 }
-                console.log(`Episodes in ${fromDomain} after transfer:`, Object.fromEntries(Object.entries(episodes).filter(([id, ep]) => ep.d === Domains[fromDomain].i)));
-                console.log(`Episodes in ${toDomain} after transfer:`, Object.fromEntries(Object.entries(episodes).filter(([id, ep]) => ep.d === Domains[toDomain].i)));
+                log('log', `Episodes in ${fromDomain} after transfer:`, Object.fromEntries(Object.entries(episodes).filter(([id, ep]) => ep.d === Domains[fromDomain].i)));
+                log('log', `Episodes in ${toDomain} after transfer:`, Object.fromEntries(Object.entries(episodes).filter(([id, ep]) => ep.d === Domains[toDomain].i)));
                 saveEpisodes(episodes);
             });
     }

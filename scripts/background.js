@@ -43,16 +43,16 @@ chrome.runtime.onInstalled.addListener(function(details) {
         // Purge all save-data
         // chrome.storage.local.clear(() => {
         //     if (chrome.runtime.lastError) {
-        //         console.error("Error clearing chrome.storage.local:", chrome.runtime.lastError);
+        //         log('error',"Error clearing chrome.storage.local:", chrome.runtime.lastError);
         //     } else {
-        //         console.log("All data cleared from chrome.storage.local.");
+        //         log('log',"All data cleared from chrome.storage.local.");
         //     }
         // });
         // chrome.storage.sync.clear(() => {
         //     if (chrome.runtime.lastError) {
-        //         console.error("Error clearing chrome.storage.sync:", chrome.runtime.lastError);
+        //         log('error',"Error clearing chrome.storage.sync:", chrome.runtime.lastError);
         //     } else {
-        //         console.log("All data cleared from chrome.storage.sync.");
+        //         log('log',"All data cleared from chrome.storage.sync.");
         //     }
         // });
         VersionUpdate();
@@ -65,7 +65,7 @@ chrome.runtime.onMessage.addListener(async(request, sender, sendResponse) => {
         trackDomain(request.domain);
         sendResponse({ status: "success" });
     } else if (request.action === 'trackEpisode') {
-        console.log(`Domain Tracking Requested: ${request.domain}`);
+        log('log', `Domain Tracking Requested: ${request.domain}`);
 
         getDomains().then((Domains) => {
             //const domain = getDomainFromUrl(request.domain);
@@ -80,17 +80,20 @@ chrome.runtime.onMessage.addListener(async(request, sender, sendResponse) => {
 
 // Listener for tab updates (i.e., when a user navigates to a new page)
 chrome.tabs.onUpdated.addListener(async(tabId, changeInfo, tab) => {
-    // console.log(`Domain Page ${changeInfo.status}: ${tab.url}`);
+    // log('log',`Domain Page ${changeInfo.status}: ${tab.url}`);
     if (changeInfo.status === 'complete' && tab.url) {
 
         const domain = getDomainFromUrl(tab.url);
-        console.log(`Domain Page Loaded: ${domain}`);
+        log('log', `Domain Page Loaded: ${domain}`);
         // let Domains = await asyncGetDomains();
         getDomains().then((Domains) => {
             // Check if this domain is tracked
             if (Domains.hasOwnProperty(domain)) {
-                const settings = Domains[domain];
-                addEpisode(domain, settings, tab);
+                // And we still have permissions
+                hasPermission(URL_PATTERN.replace('$d', domain)).then((result) => {
+                    const settings = Domains[domain];
+                    addEpisode(domain, settings, tab);
+                });
             }
         });
     }
@@ -107,19 +110,22 @@ async function addEpisode(domain, settings, tab) {
             args: [settings]
         }, (results) => {
             if (chrome.runtime.lasterror) {
-                console.error('Script Injection Error: ', chrome.runtime.lastError.message);
+                log('error', 'Script Injection Error: ', chrome.runtime.lastError.message);
             } else {
-                console.log('Script Injection Complete.');
+                log('log', 'Script Injection Complete.');
             }
             if (results) {
                 if (results[0]) {
                     const documentContent = results[0].result;
-                    console.log('Current Document content retrieved. ', documentContent);
+                    log('log', 'Current Document content retrieved. ', documentContent);
 
                     const details = getDetails(domain, documentContent, tab, settings);
-
+                    if (!details) {
+                        log('log', `Details not found. Skipping.`);
+                        return;
+                    }
                     if (details.episode == 0 && settings.ie == 0) {
-                        console.log(`Episode not found. ${details.title} skipped.`);
+                        log('log', `Episode not found. Skipping ${details.title}`);
                         return;
                     }
                     const data = getFromAPI(details, tab, settings);
@@ -130,9 +136,12 @@ async function addEpisode(domain, settings, tab) {
     } else {
         // If we don't need content from the page, just add it with what we have
         const details = getDetails(domain, { title: 'ignored', season: 'ignored', episode: 'ignored' }, tab, settings);
-
+        if (!details) {
+            log('log', `Details not found. Skipping.`);
+            return;
+        }
         if (details.episode == 0 && settings.ie == 0) {
-            console.log(`Episode not found. ${details.title} skipped.`);
+            log('log', `Episode not found. Skipping ${details.title}`);
             return;
         }
         const data = getFromAPI(details, tab, settings);
@@ -148,12 +157,12 @@ function getFromAPI(details, tab, settings) {
                 fetchJikanAnime(details)
                 .then(retA => {
                     if (!retA.json.data[0]) {
-                        console.error(`JIKAN Data[0] not Found searching ${tab.url}`);
+                        log('error', `JIKAN Data[0] not Found searching ${tab.url}`);
                         return;
                     }
                     fetchJikanAnimeEpisodes(retA.json.data[0].mal_id)
                         .then(retEp => {
-                            console.log(`JIKAN Found ${retEp.json.data.length} episodes for ${retA.json.data[0].mal_id}`);
+                            log('log', `JIKAN Found ${retEp.json.data.length} episodes for ${retA.json.data[0].mal_id}`);
                             const jikan = {
                                 id: retA.json.data[0].mal_id,
                                 c: settings.c, // Anime
@@ -179,7 +188,7 @@ function getFromAPI(details, tab, settings) {
                                         jikan.t = t.title;
                                     // title = t.title;
                                 });
-                                console.log(`JIKAN Success: ${jikan.id} / ${jikan.t}`);
+                                log('log', `JIKAN Success: ${jikan.id} / ${jikan.t}`);
                             } else {
                                 if (retA.json.data[0].title) // default
                                     jikan.t = retA.json.data[0].title;
@@ -191,7 +200,7 @@ function getFromAPI(details, tab, settings) {
                             addEpisodeToStorage(jikan, tab, settings);
                         });
                 })
-                .catch(error => console.error(`JIKAN Error: ${error}`));
+                .catch(error => log('error', `JIKAN Error: ${error}`));
                 break;
             }
         case "Manga":
@@ -200,7 +209,7 @@ function getFromAPI(details, tab, settings) {
                 fetchJikanManga(details)
                 .then(ret => {
                     if (!ret.json.data[0]) {
-                        console.error(`JIKAN Data[0] not Found searching ${tab.url}`);
+                        log('error', `JIKAN Data[0] not Found searching ${tab.url}`);
                         return;
                     }
                     const jikan = {
@@ -228,7 +237,7 @@ function getFromAPI(details, tab, settings) {
                                 jikan.t = t.title;
                             // title = t.title;
                         });
-                        console.log(`JIKAN Success: ${jikan.id} / ${jikan.t}`);
+                        log('log', `JIKAN Success: ${jikan.id} / ${jikan.t}`);
                     } else {
                         if (ret.json.data[0].title) // default
                             jikan.t = ret.json.data[0].title;
@@ -239,7 +248,7 @@ function getFromAPI(details, tab, settings) {
                     // ret.data.title = title;
                     addEpisodeToStorage(jikan, tab, settings);
                 })
-                .catch(error => console.error(`JIKAN Error: ${error}`));
+                .catch(error => log('error', `JIKAN Error: ${error}`));
                 break;
             }
         case "Movies":
@@ -262,7 +271,7 @@ function getFromAPI(details, tab, settings) {
                     l: "tab.url", // URL Last Viewed
                     u: Date.now() // Track the time it was viewed
                 };
-                console.log(`Raw Success: ${ep.id} / ${ep.t}`);
+                log('log', `Raw Success: ${ep.id} / ${ep.t}`);
                 addEpisodeToStorage(ep, tab, settings);
                 break;
             }
@@ -276,7 +285,7 @@ function getDocumentContent(settings) {
         episode: 'ignored'
     }
 
-    console.log('Querying for content.');
+    log('log', 'Querying for content.');
     try {
         // Example: Get the inner HTML of the body (you can modify this as needed)
         if (settings.otm) {
@@ -332,7 +341,7 @@ function getDocumentContent(settings) {
                 data.episode = "Match was Empty";
         }
     } catch (error) {
-        console.log('Unable to query document.');
+        log('log', 'Unable to query document.');
         data.title = `${error.name}: ${error.message}`;
         data.season = error.stack;
     }
@@ -352,9 +361,9 @@ function showWarningNotification(title, season, episode) {
 
     chrome.notifications.create('EpisodeSkippedWarning', notificationOptions, (notificationId) => {
         if (chrome.runtime.lastError) {
-            console.error('Notification creation failed:', chrome.runtime.lastError.message);
+            log('error', 'Notification creation failed:', chrome.runtime.lastError.message);
         } else {
-            console.log('Notification created with ID:', notificationId);
+            log('log', 'Notification created with ID:', notificationId);
         }
     });
 }
@@ -369,78 +378,95 @@ function getDetails(domain, document, tab, settings) {
     }
     switch (parseInt(settings.os)) {
         case 0:
-            console.log(`Searching Season using: '${new URL(tab.url).pathname}'`);
+            log('log', `Searching Season using: '${new URL(tab.url).pathname}'`);
             getSeasonDetails(data, new URL(tab.url).pathname, settings);
             break;
         case 1:
-            console.log(`Searching Season from Title`);
+            log('log', `Searching Season from Title`);
             getSeasonDetails(data, tab.title.trim(), settings);
             break;
         case 2:
-            console.log(`Searching Season from Selector`);
-            getSeasonDetails(data, document.season.trim(), settings);
+            if (document && document.hasOwnProperty('season')) {
+                log('log', `Searching Season from Selector`);
+                getSeasonDetails(data, document.season.trim(), settings);
+            } else {
+                log('warn', `Could not find season data.`);
+                data.season = 1;
+            }
             break;
         default:
-            console.log(`ERROR: obtainSeasonFrom = '${settings.os}'`);
+            log('log', `ERROR: obtainSeasonFrom = '${settings.os}'`);
             settings['os'] = 0;
-            console.log(`Searching Season using: '${new URL(tab.url).pathname}'`);
+            log('log', `Searching Season using: '${new URL(tab.url).pathname}'`);
             getSeasonDetails(data, new URL(tab.url).pathname, settings);
     }
-    console.log(`Season Match: '${data.season}'`);
+    log('log', `Season Match: '${data.season}'`);
     switch (parseInt(settings.oe)) {
         case 0:
-            console.log(`Searching Episode using: '${new URL(tab.url).pathname}'`);
+            log('log', `Searching Episode using: '${new URL(tab.url).pathname}'`);
             getEpisodeDetails(data, new URL(tab.url).pathname, settings);
             break;
         case 1:
-            console.log(`Searching Episode using: '${tab.episode.trim()}'`);
+            log('log', `Searching Episode using: '${tab.episode.trim()}'`);
             getEpisodeDetails(data, tab.episode.trim(), settings);
             break;
         case 2:
-            console.log(`Searching Episode using: '${document.episode.trim()}'`);
-            getEpisodeDetails(data, document.episode.trim(), settings);
+            if (document && document.hasOwnProperty('episode')) {
+                log('log', `Searching Episode using: '${document.episode.trim()}'`);
+                getEpisodeDetails(data, document.episode.trim(), settings);
+            } else {
+                log('warn', `Could not find episode data.`);
+                if (!settings.ie)
+                    return null;
+                data.episode = 0;
+            }
             break;
         default:
-            console.log(`ERROR: obtainEpisodeFrom = '${settings.oe}'`);
+            log('log', `ERROR: obtainEpisodeFrom = '${settings.oe}'`);
             settings['oe'] = 0;
-            console.log(`Searching Episode using: '${new URL(tab.url).pathname}'`);
+            log('log', `Searching Episode using: '${new URL(tab.url).pathname}'`);
             getEpisodeDetails(data, new URL(tab.url).pathname, settings);
     }
-    console.log(`Episode Match: '${data.episode}'`);
+    log('log', `Episode Match: '${data.episode}'`);
     switch (parseInt(settings.ot)) {
         case 0:
-            console.log(`Searching Title using: '${new URL(tab.url).pathname}'`);
+            log('log', `Searching Title using: '${new URL(tab.url).pathname}'`);
             getTitleDetails(data, new URL(tab.url).pathname, settings);
             break;
         case 1:
-            console.log(`Searching Title from Title`);
+            log('log', `Searching Title from Title`);
             getTitleDetails(data, tab.title.trim(), settings);
             break;
         case 2:
-            console.log(`Searching Title from Selector`);
-            getTitleDetails(data, document.title.trim(), settings);
+            if (document && document.hasOwnProperty('title')) {
+                log('log', `Searching Title from Selector`);
+                getTitleDetails(data, document.title.trim(), settings);
+            } else {
+                log('warn', `Could not find title data.`);
+                return null;
+            }
             break;
         default:
-            console.log(`ERROR: obtainTitleFrom = '${settings.ot}'`);
+            log('log', `ERROR: obtainTitleFrom = '${settings.ot}'`);
             settings['ot'] = 0;
-            console.log(`Searching Title from URL`);
+            log('log', `Searching Title from URL`);
             getTitleDetails(data, new URL(tab.url).pathname, settings);
     }
-    console.log(`Title Match: '${data.title}'`);
+    log('log', `Title Match: '${data.title}'`);
     return data;
 }
 
 // Function to extract a unique Title
 // NOTE: Soft match can match YEAR or SEASON in the title
 function getTitleDetails(data, context, settings) {
-    // console.log(`Title Search: '${context}'`);
+    // log('log',`Title Search: '${context}'`);
     let cleanPath = context;
     if (settings.ot == settings.oe)
         cleanPath = cleanPath.replace((data.matched == 1 ? episodeRegex_Rigid : (data.matched == 2 ? episodeRegex_Simple : episodeRegex_Soft)), '') // Remove episode from title
     cleanPath = cleanPath
         .replace(/[-_/]+/g, ' ')
         .trim();
-    // console.log(`Clean Title: '${context}'`);
+    // log('log',`Clean Title: '${context}'`);
 
     // Title should be the cleaned path, capitalized
     data.title = cleanPath
@@ -451,64 +477,64 @@ function getTitleDetails(data, context, settings) {
 
 async function fetchJikanAnime(details) {
     const url = `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(details.title)}&limit=1`;
-    console.log(`Attempting JIKAN API: ${url}`);
+    log('log', `Attempting JIKAN API: ${url}`);
 
     try {
         const response = await fetch(url); // Await the fetch response
-        console.log('Response status:', response.status); // Should log the status code
+        log('log', 'Response status:', response.status); // Should log the status code
 
         if (response.ok) { // Checks if status is in the range 200-299
             const json = await response.json(); // Parse JSON if response is successful
-            console.log(`JIKAN: Data Retrieved`);
+            log('log', `JIKAN: Data Retrieved`);
             return { data: details, json: json };
         } else {
-            console.error(`Bad response from JIKAN: ${response.status}`);
+            log('error', `Bad response from JIKAN: ${response.status}`);
             return { data: details, json: null };
         }
     } catch (error) {
-        console.error('Fetch error:', error); // Handle network errors
+        log('error', 'Fetch error:', error); // Handle network errors
         return { data: details, json: null };
     }
 }
 async function fetchJikanAnimeEpisodes(animeID) {
     const url = `https://api.jikan.moe/v4/anime/${animeID}/episodes`;
-    console.log(`Attempting JIKAN API: ${url}`);
+    log('log', `Attempting JIKAN API: ${url}`);
 
     try {
         const response = await fetch(url); // Await the fetch response
-        console.log('Response status:', response.status); // Should log the status code
+        log('log', 'Response status:', response.status); // Should log the status code
 
         if (response.ok) { // Checks if status is in the range 200-299
             const json = await response.json(); // Parse JSON if response is successful
-            console.log(`JIKAN: Data Retrieved`);
+            log('log', `JIKAN: Data Retrieved`);
             return { animeID: animeID, json: json };
         } else {
-            console.error(`Bad response from JIKAN: ${response.status}`);
+            log('error', `Bad response from JIKAN: ${response.status}`);
             return { animeID: animeID, json: json };
         }
     } catch (error) {
-        console.error('Fetch error:', error); // Handle network errors
+        log('error', 'Fetch error:', error); // Handle network errors
         return { animeID: animeID, json: null };
     }
 }
 async function fetchJikanManga(details) {
     const url = `https://api.jikan.moe/v4/manga?q=${encodeURIComponent(details.title)}&limit=1`;
-    console.log(`Attempting JIKAN API: ${url}`);
+    log('log', `Attempting JIKAN API: ${url}`);
 
     try {
         const response = await fetch(url); // Await the fetch response
-        console.log('Response status:', response.status); // Should log the status code
+        log('log', 'Response status:', response.status); // Should log the status code
 
         if (response.ok) { // Checks if status is in the range 200-299
             const json = await response.json(); // Parse JSON if response is successful
-            console.log(`JIKAN: Data Retrieved`);
+            log('log', `JIKAN: Data Retrieved`);
             return { data: details, json: json };
         } else {
-            console.error(`Bad response from JIKAN: ${response.status}`);
+            log('error', `Bad response from JIKAN: ${response.status}`);
             return { data: details, json: null };
         }
     } catch (error) {
-        console.error('Fetch error:', error); // Handle network errors
+        log('error', 'Fetch error:', error); // Handle network errors
         return { data: details, json: null };
     }
 }
@@ -526,17 +552,17 @@ function getEpisodeDetails(data, context, settings) {
     // Rigid episode match
     let eMatch = 1;
     let episodeMatch = filteredPath.match(episodeRegex_Rigid);
-    console.log(`After episodeRegex_Rigid: '${(episodeMatch? 'matched':'not found')}'`);
+    log('log', `After episodeRegex_Rigid: '${(episodeMatch? 'matched':'not found')}'`);
     if (!episodeMatch) { // Simple episode match
         eMatch = 2;
         episodeMatch = filteredPath.match(episodeRegex_Simple);
-        console.log(`After episodeRegex_Simple: '${(episodeMatch? 'matched':'not found')}'`);
+        log('log', `After episodeRegex_Simple: '${(episodeMatch? 'matched':'not found')}'`);
         if (!episodeMatch) { // Soft episode match
             eMatch = 3;
             // Remove (YEAR) for possible mismatch
             filteredPath = filteredPath.replace(yearRegex, '');
             episodeMatch = filteredPath.match(episodeRegex_Soft);
-            console.log(`After episodeRegex_Soft: '${(episodeMatch? 'matched':'not found')}'`);
+            log('log', `After episodeRegex_Soft: '${(episodeMatch? 'matched':'not found')}'`);
             if (!episodeMatch)
                 eMatch = 0;
         }
@@ -549,7 +575,7 @@ let isWindowCreated = false;
 function addEpisodeToStorage(jikan, tab, settings) {
     // If episode didn't match, and we're not allowed to skip
     if (jikan.episode == 0 && settings.ie == 0) {
-        console.log(`Ignored: ${((settings.ot == 2) ? tab.title : tab.url).trim().toLowerCase()}, no episode data found.`);
+        log('log', `Ignored: ${((settings.ot == 2) ? tab.title : tab.url).trim().toLowerCase()}, no episode data found.`);
         return;
     }
     // const episodes = getEpisodes();
@@ -562,7 +588,7 @@ function addEpisodeToStorage(jikan, tab, settings) {
             // Check if the title already exists in storage
             if (episodes[jikan.id]) {
                 if (jikan.e <= episodes[jikan.id].e) {
-                    console.log(`Episode already watched: ${jikan.id}. No updates made.`);
+                    log('log', `Episode already watched: ${jikan.id}. No updates made.`);
                 } else if (isEpisodeSequential(jikan.e.toString(), episodes[jikan.id].e.toString()) || settings.forced) {
                     // Update the episode if it is sequential
                     episodes[jikan.id].d = settings.i; // we're changing URL, so we need to change the domain it links to as well
@@ -572,10 +598,10 @@ function addEpisodeToStorage(jikan, tab, settings) {
                     episodes[jikan.id].r = jikan.e;
                     episodes[jikan.id].f = jikan.f;
                     episodes[jikan.id].u = Date.now();
-                    console.log(`Updated: ${jikan.id} - Episode ${jikan.e}`);
+                    log('log', `Updated: ${jikan.id} - Episode ${jikan.e}`);
                 } else {
                     // Notify because the episode is tracked, but watched out of order
-                    console.log(`Episode watched out of order for: ${jikan.id}. No updates made.`);
+                    log('log', `Episode watched out of order for: ${jikan.id}. No updates made.`);
                     if (settings.n) {
                         //
                         // Generate a notification window to warn the user that they may have skipped an episode
@@ -639,16 +665,16 @@ function addEpisodeToStorage(jikan, tab, settings) {
                         l: new URL(tab.url).pathname, // URL Last Viewed
                         u: Date.now() // Track the time it was viewed
                     };
-                    console.log(`Tracked: ${jikan.t} - Episode ${jikan.e} of ${jikan.n}`);
+                    log('log', `Tracked: ${jikan.t} - Episode ${jikan.e} of ${jikan.n}`);
                 } else {
                     // TODO: Handle force-track-episode
-                    console.log(`Only Episode 1 can be added for new titles. Episode ${jikan.e} not tracked.`);
+                    log('log', `Only Episode 1 can be added for new titles. Episode ${jikan.e} not tracked.`);
                 }
             }
 
             // Save the updated episodes list back to storage
             // chrome.storage.local.set({ episodes });
-            // console.log('Episodes saved:', episodes);
+            // log('log','Episodes saved:', episodes);
             saveEpisodes(episodes);
 
             chrome.runtime.sendMessage({ action: "reload" }, (response) => {
@@ -693,10 +719,10 @@ async function trackDomain(domain) {
     // const Domains = getDomains();
     getDomains()
         .catch((error) => {
-            console.error(`Failed to get Domains: ${error.name}: ${error.message}`);
+            log('error', `Failed to get Domains: ${error.name}: ${error.message}`);
         })
         .then((Domains) => {
-            // console.log('Domains after Loading:', Domains);
+            // log('log','Domains after Loading:', Domains);
             // if (!(domain in Domains)) {
             if (!Domains.hasOwnProperty(domain)) {
                 const uid = createDomainId(Domains);
@@ -715,7 +741,7 @@ async function trackDomain(domain) {
                     s: 0 // 'Sort By' Last Updated
                 };
                 saveDomains(Domains);
-                console.log(`Domain ${domain} is now being tracked.`);
+                log('log', `Domain ${domain} is now being tracked.`);
                 chrome.runtime.sendMessage({ action: "reload" }, (response) => {
                     if (chrome.runtime.lastError)
                     ; // Ignore Error when user stops focusing

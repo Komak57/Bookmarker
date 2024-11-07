@@ -14,7 +14,7 @@ document.title = episodeTitle;
 
 // Redirect to the episode URL when the button is clicked
 document.getElementById('goToEpisode').addEventListener('click', () => {
-    console.log(`Returning to ${episodeUrl}`);
+    log('log', `Returning to ${episodeUrl}`);
     // Tell the active tab to navigate to the episode URL
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         if (episodeUrl && tabId) {

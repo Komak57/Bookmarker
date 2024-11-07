@@ -6,6 +6,7 @@ const episodeRegex_Rigid = /(?:episode|ep|e|part|chapter|ch)?[- ]?(\d+(?:[a-z.]?
 const episodeRegex_Simple = /(?:episode|ep|e|part|chapter|ch)?[- ]?(\d+(?:[a-z.]?\d+)?)\b/i;
 const episodeRegex_Soft = /\b(\d+(?:[a-z.]?\d+)?)\b/i;
 const subRegex = /^(?:[^.]+\.)?([^.]+\.[^/]+.*$)/i;
+const URL_PATTERN = 'https://*.$d/*';
 
 // options.js
 const fromOptions = ["URL", "Tab Text", "Content on Page"];
@@ -13,6 +14,32 @@ const sortBy = ["Last Viewed", "Ascending", "Descending"];
 const categories = ["Anime", "Manga", "Movies", "Other"];
 
 const MAX_TITLE_LENGTH = 73;
+const DEBUGGING = true;
+
+function log(type, ...msg) {
+    const message = msg.join('');
+    if (!DEBUGGING)
+        return;
+    switch (type) {
+        case 'error':
+            console.error(message);
+            break;
+        case 'log':
+            console.log(message);
+            break;
+        case 'warn':
+            console.warn(message);
+            break;
+        case 'info':
+            console.info(message);
+            break;
+        case 'debug':
+            console.debug(message);
+            break;
+        default:
+            console.log(message);
+    }
+}
 
 function delayExecution(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -32,7 +59,7 @@ async function getVersion() {
         // Load tracked domains
         chrome.storage.sync.get('Version', function(data) {
             if (chrome.runtime.lastError) {
-                console.error(`Failed to get Version: ${chrome.runtime.lastError.name}: ${chrome.runtime.lastError.message}`);
+                log('error', `Failed to get Version: ${chrome.runtime.lastError.name}: ${chrome.runtime.lastError.message}`);
                 reject(new Error(chrome.runtime.lastError.message));
             } else {
                 resolve(data.Version || "null");
@@ -44,10 +71,10 @@ async function getVersion() {
 function saveVersion(Version) {
     chrome.storage.sync.set({ Version }, () => {
         if (chrome.runtime.lastError) {
-            console.error(`Failed to save Version: ${chrome.runtime.lastError.name}: ${chrome.runtime.lastError.message}`);
+            log('error', `Failed to save Version: ${chrome.runtime.lastError.name}: ${chrome.runtime.lastError.message}`);
             throw new Error(chrome.runtime.lastError.message);
         } else {
-            console.log(`Version v${Version} saved as current version.`);
+            log('log', `Version v${Version} saved as current version.`);
         }
     });
 }
@@ -57,15 +84,15 @@ async function getDomains() {
         // Load tracked domains
         chrome.storage.sync.get('Domains', function(data) {
             if (chrome.runtime.lastError) {
-                console.error(`Failed to get Domains: ${chrome.runtime.lastError.name}: ${chrome.runtime.lastError.message}`);
+                log('error', `Failed to get Domains: ${chrome.runtime.lastError.name}: ${chrome.runtime.lastError.message}`);
                 reject(new Error(chrome.runtime.lastError.message));
             } else {
                 if (data.Domains) {
-                    console.log(`${Object.keys(data.Domains).length} Domains Exist in save:`, data.Domains);
+                    log('log', `${Object.keys(data.Domains).length} Domains Exist in save:`, data.Domains);
                 } else
-                    console.log(`No Domains Existed in save`);
+                    log('log', `No Domains Existed in save`);
                 // return data.Domains || [];
-                // console.log('Outbound Domains is a ', typeof data.Domains);
+                // log('log','Outbound Domains is a ', typeof data.Domains);
                 resolve(data.Domains || {});
             }
         });
@@ -73,14 +100,14 @@ async function getDomains() {
 }
 
 function saveDomains(Domains) {
-    // console.log('Inbound Domains is a ', typeof Domains);
+    // log('log','Inbound Domains is a ', typeof Domains);
     chrome.storage.sync.set({ Domains }, () => {
         if (chrome.runtime.lastError) {
-            console.error(`Failed to save Domains: ${chrome.runtime.lastError.name}: ${chrome.runtime.lastError.message}`);
+            log('error', `Failed to save Domains: ${chrome.runtime.lastError.name}: ${chrome.runtime.lastError.message}`);
             throw new Error(chrome.runtime.lastError.message);
         } else {
-            // console.log(`Domains Saved`);
-            console.log('Domains after Saving:', Domains);
+            // log('log',`Domains Saved`);
+            log('log', 'Domains after Saving:', Domains);
         }
     });
 }
@@ -90,7 +117,7 @@ async function getEpisodes() {
         // Load cloud-saved episode list
         chrome.storage.sync.get('Episodes', function(cloudData) {
             if (chrome.runtime.lastError) {
-                console.error(`Failed to get cloudEpisodes: ${chrome.runtime.lastError.name}: ${chrome.runtime.lastError.message}`);
+                log('error', `Failed to get cloudEpisodes: ${chrome.runtime.lastError.name}: ${chrome.runtime.lastError.message}`);
                 // return [];
                 reject(new Error(`Failed to get localEpisodes: ${chrome.runtime.lastError.name}: ${chrome.runtime.lastError.message}`));
             } else {
@@ -98,12 +125,12 @@ async function getEpisodes() {
                 // Load local-saved episode list
                 chrome.storage.local.get('Episodes', function(localData) {
                     if (chrome.runtime.lastError) {
-                        console.error(`Failed to get localEpisodes: ${chrome.runtime.lastError.name}: ${chrome.runtime.lastError.message}`);
+                        log('error', `Failed to get localEpisodes: ${chrome.runtime.lastError.name}: ${chrome.runtime.lastError.message}`);
                         // return [];
                         reject(new Error(`Failed to get localEpisodes: ${chrome.runtime.lastError.name}: ${chrome.runtime.lastError.message}`));
                     } else {
                         let localEpisodes = localData.Episodes || {};
-                        // console.log(`${Object.keys(localEpisodes).length} Episodes Exist in save`);
+                        // log('log',`${Object.keys(localEpisodes).length} Episodes Exist in save`);
                         let missingEpisodes = localData.Episodes || {};
 
                         // Purge any redundant Cloud Episodes
@@ -114,7 +141,7 @@ async function getEpisodes() {
                         }
                         if (Object.keys(cloudEpisodes).length > 0) {
                             // TODO: Queue remaining cloudEpisodes for API data retrieval
-                            console.log(`${Object.keys(cloudEpisodes).length} Episodes from the Cloud need to be re-obtained.`);
+                            log('log', `${Object.keys(cloudEpisodes).length} Episodes from the Cloud need to be re-obtained.`);
 
                             for (let id in cloudEpisodes) {
                                 localEpisodes[id] = {
@@ -133,10 +160,10 @@ async function getEpisodes() {
                         }
 
                         if (localEpisodes)
-                            console.log(`${Object.keys(localEpisodes).length} Episodes Exist after processing`);
+                            log('log', `${Object.keys(localEpisodes).length} Episodes Exist after processing`);
                         else
-                            console.log(`No Episodes Existed after processing`);
-                        // console.log('Outbound Episodes is a ', typeof localEpisodes);
+                            log('log', `No Episodes Existed after processing`);
+                        // log('log','Outbound Episodes is a ', typeof localEpisodes);
                         resolve(localEpisodes || {});
                         // return localEpisodes || [];
                     }
@@ -147,7 +174,7 @@ async function getEpisodes() {
 }
 
 function saveEpisodes(localEpisodes) {
-    // console.log(`Inbound Episodes is a ${typeof localEpisodes} of size ${JSON.stringify(localEpisodes).length}b`);
+    // log('log',`Inbound Episodes is a ${typeof localEpisodes} of size ${JSON.stringify(localEpisodes).length}b`);
     // const _localEpisodes = Object.fromEntries(
     //     Object.entries(localEpisodes).map(([key, value]) => [key.toString(), value])
     // );
@@ -167,39 +194,39 @@ function saveEpisodes(localEpisodes) {
     }
     const size = JSON.stringify(cloudEpisodes).length;
     if (size > chrome.storage.sync.QUOTA_BYTES_PER_ITEM) {
-        console.error(`Cloud Episodes is a ${typeof cloudEpisodes} of size ${size}b`);
-        console.log('String: ', JSON.stringify(cloudEpisodes));
+        log('error', `Cloud Episodes is a ${typeof cloudEpisodes} of size ${size}b`);
+        log('log', 'String: ', JSON.stringify(cloudEpisodes));
     }
     chrome.storage.sync.set({ Episodes: cloudEpisodes }, () => {
         if (chrome.runtime.lastError) {
-            console.error(`Error saving to storage.sync; ${chrome.runtime.lastError.name}: ${chrome.runtime.lastError.message}`);
+            log('error', `Error saving to storage.sync; ${chrome.runtime.lastError.name}: ${chrome.runtime.lastError.message}`);
         } else {
-            // console.log('Successfully exported data to storage.sync.');
-            console.log('Cloud Episodes after Saving:', cloudEpisodes);
+            // log('log','Successfully exported data to storage.sync.');
+            log('log', 'Cloud Episodes after Saving:', cloudEpisodes);
         }
     });
 
     // Save complete data locally
     // const Episodes = _localEpisodes;
-    // console.log(`Cloud Episodes is a ${typeof localEpisodes} of size ${JSON.stringify(localEpisodes).length}b`);
+    // log('log',`Cloud Episodes is a ${typeof localEpisodes} of size ${JSON.stringify(localEpisodes).length}b`);
     chrome.storage.local.set({ Episodes: localEpisodes }, () => {
         if (chrome.runtime.lastError) {
-            console.error(`Error saving to storage.local; ${chrome.runtime.lastError.name}: ${chrome.runtime.lastError.message}`);
+            log('error', `Error saving to storage.local; ${chrome.runtime.lastError.name}: ${chrome.runtime.lastError.message}`);
         } else {
-            // console.log('Successfully saved data to storage.local.');
-            console.log('Local Episodes after Saving:', localEpisodes);
+            // log('log','Successfully saved data to storage.local.');
+            log('log', 'Local Episodes after Saving:', localEpisodes);
         }
     });
 }
 
 // Function to get domain from URL
 function getDomainFromUrl(url) {
-    console.log('Constructing URL:', url);
+    log('log', 'Constructing URL:', url);
     try {
         const urlObj = new URL(url);
         return urlObj.hostname.replace(subRegex, "$1");
     } catch (er) {
-        console.log('Unable to convert to URL');
+        log('log', 'Unable to convert to URL');
         return url.replace(subRegex, "$1");
     }
 }
@@ -248,7 +275,7 @@ function exportAsCSV() {
             getEpisodes()
                 .then((episodes) => {
                     if (chrome.runtime.lastError) {
-                        console.error("Error retrieving data:", chrome.runtime.lastError);
+                        log('error', "Error retrieving data:", chrome.runtime.lastError);
                         return;
                     }
                     // Generate Header
@@ -296,7 +323,7 @@ function VersionUpdate() {
     getVersion().then((lastVersion) => {
         const manifestData = chrome.runtime.getManifest();
         if (lastVersion != manifestData.version) {
-            console.log("Attempting to update outdated variables for v", lastVersion);
+            log('log', "Attempting to update outdated variables for v", lastVersion);
 
             getDomains()
                 .then((domains) => {
@@ -306,7 +333,7 @@ function VersionUpdate() {
                             [_major, _minor, _patch] = manifestData.version.split('.');
                             switch (`${major}.${minor}`) {
                                 case '1.2': // 1.2.0
-                                    console.log(`No Changes Required for v1.2`);
+                                    log('log', `No Changes Required for v1.2`);
                                     saveVersion('1.2.0');
                                 case '1.3': // 1.3.0
                                     for (let id in episodes) {
@@ -314,29 +341,29 @@ function VersionUpdate() {
                                         episodes[id]['r'] = episodes[id].e;
                                     }
                                     saveEpisodes(episodes);
-                                    console.log(`Updated all episodes to implement released episode counts Required for v1.3`);
+                                    log('log', `Updated all episodes to implement released episode counts Required for v1.3`);
                                     // We'll update to manifestData.version anyways
                                     if (`${major}.${minor}` != `${_major}.${_minor}`)
                                         saveVersion('1.3.0');
                                 case `${_major}.${_minor}`:
-                                    console.log(`No Further Changes Required for v${manifestData.version}`);
+                                    log('log', `No Further Changes Required for v${manifestData.version}`);
                                     saveVersion(manifestData.version);
                                     break;
                                 default:
-                                    console.log(`Version Update could not patch from v${lastVersion} to ${manifestData.version}`);
+                                    log('log', `Version Update could not patch from v${lastVersion} to ${manifestData.version}`);
                                     // // Purge all save-data
                                     // chrome.storage.local.clear(() => {
                                     //     if (chrome.runtime.lastError) {
-                                    //         console.error("Error clearing chrome.storage.local:", chrome.runtime.lastError);
+                                    //         log('error',"Error clearing chrome.storage.local:", chrome.runtime.lastError);
                                     //     } else {
-                                    //         console.log("All data cleared from chrome.storage.local.");
+                                    //         log('log',"All data cleared from chrome.storage.local.");
                                     //     }
                                     // });
                                     // chrome.storage.sync.clear(() => {
                                     //     if (chrome.runtime.lastError) {
-                                    //         console.error("Error clearing chrome.storage.sync:", chrome.runtime.lastError);
+                                    //         log('error',"Error clearing chrome.storage.sync:", chrome.runtime.lastError);
                                     //     } else {
-                                    //         console.log("All data cleared from chrome.storage.sync.");
+                                    //         log('log',"All data cleared from chrome.storage.sync.");
                                     //     }
                                     // });
                                     saveVersion(manifestData.version); // Assume current version
@@ -344,7 +371,7 @@ function VersionUpdate() {
                         });
                 });
         } else {
-            console.log(`Version v${lastVersion} already up to date.`);
+            log('log', `Version v${lastVersion} already up to date.`);
         }
     });
 }
