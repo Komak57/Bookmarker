@@ -292,7 +292,7 @@ function exportAsCSV() {
 
                     // Process Episodes
                     for (const [id, episode] of Object.entries(episodes)) {
-                        const row = `${id}|${id || 'null'}|${episode.c || '0'}|${episode.d || 'null'}|${episode.t || ''}|${episode.e || '1'}|${episode.r || '0'}|${episode.n || '0'}|${episode.p || ''}|${episode.f || 'false'}|${episode.u || 'null'}`; // Customize fields
+                        const row = `${id || 'null'}|${episode.c || '0'}|${episode.d || 'null'}|${episode.t || ''}|${episode.e || '1'}|${episode.r || '0'}|${episode.n || '0'}|${episode.p || ''}|${episode.l || ''}|${episode.f || 'false'}|${episode.u || 'null'}`; // Customize fields
                         csvContent += row + "\n";
                     }
 
