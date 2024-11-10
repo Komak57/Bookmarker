@@ -588,15 +588,21 @@ function addEpisodeToStorage(jikan, tab, settings) {
             // Check if the title already exists in storage
             if (episodes[jikan.id]) {
                 if (jikan.e <= episodes[jikan.id].e) {
-                    log('log', `Episode already watched: ${jikan.id}. No updates made.`);
+                    episodes[jikan.id].l = new URL(tab.url).pathname; // update URL
+                    episodes[jikan.id].r = jikan.r;
+                    episodes[jikan.id].n = jikan.n;
+                    episodes[jikan.id].p = jikan.p;
+                    log('log', `Episode already watched: ${jikan.id}.`);
                 } else if (isEpisodeSequential(jikan.e.toString(), episodes[jikan.id].e.toString()) || settings.forced) {
                     // Update the episode if it is sequential
                     episodes[jikan.id].d = settings.i; // we're changing URL, so we need to change the domain it links to as well
-                    episodes[jikan.id].l = tab.url; // update URL
+                    episodes[jikan.id].l = new URL(tab.url).pathname; // update URL
                     // episodes[data.title].season = data.season; // fix season in case we changed matching parameters
                     episodes[jikan.id].e = jikan.e;
-                    episodes[jikan.id].r = jikan.e;
+                    episodes[jikan.id].r = jikan.r;
+                    episodes[jikan.id].n = jikan.n;
                     episodes[jikan.id].f = jikan.f;
+                    episodes[jikan.id].p = jikan.p;
                     episodes[jikan.id].u = Date.now();
                     log('log', `Updated: ${jikan.id} - Episode ${jikan.e}`);
                 } else {
@@ -659,7 +665,7 @@ function addEpisodeToStorage(jikan, tab, settings) {
                         f: jikan.f,
                         t: jikan.t,
                         e: jikan.e,
-                        r: jikan.e,
+                        r: jikan.r,
                         n: jikan.n,
                         p: jikan.p,
                         l: new URL(tab.url).pathname, // URL Last Viewed
