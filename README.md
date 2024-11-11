@@ -2,17 +2,17 @@
 
 ## Features
 
-- • **Track Anime, Manga, Movies and Other**
-- • **Access content across domains when both domains are tracked, and the same category.**
-- • **Automatically track an episode when watching episode 1.**
-- • **Force track any episode.**
-- • **Notify when watching an episode out of order (skipping).**
-- • **Mark episode as "Complete".**
-- • **Remove episodes.**
-- • **Share your progress across platforms (limited space, est 1000 actively watched episodes, anime/manga only).**
-- • **Pull contracted episode count, thumbnail, and English name for all Anime and Manga from JIKAN API. -- False positives can occur, but will not interfere with functionality**
-- • **Settings per-domain allow for robust matching methods, including URL, Tab Title, CSS Selector, and Regex.**
-- • **Export data to CSV**
+- **Track Anime, Manga, Movies and Other**
+- **Access content across domains when both domains are tracked, and the same category.**
+- **Automatically track an episode when watching episode 1.**
+- **Force track any episode.**
+- **Notify when watching an episode out of order (skipping).**
+- **Mark episode as "Complete".**
+- **Remove episodes.**
+- **Share your progress across platforms (limited space, est 1000 actively watched episodes, anime/manga only).**
+- **Pull contracted episode count, thumbnail, and English name for all Anime and Manga from JIKAN API. -- False positives can occur, but will not interfere with functionality**
+- **Settings per-domain allow for robust matching methods, including URL, Tab Title, CSS Selector, and Regex.**
+- **Export data to CSV**
 
 ### Additional Notes
 
