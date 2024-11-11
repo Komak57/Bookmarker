@@ -23,8 +23,12 @@ Selectively track domains for content pertinent to episode or chapter related me
 ### Visual Aid
 
 <p align="center">
-  <img src="https://github.com/Komak57/Bookmarker/blob/dev/docs/Bookmarker_screenshot.png?raw=true" width="50%">
-  <img src="https://github.com/Komak57/Bookmarker/blob/dev/docs/Bookmarker_screenshot_options.png?raw=true" width="50%">
+  <img src="https://github.com/Komak57/Bookmarker/blob/dev/docs/Bookmarker_screenshot.png?raw=true" width="800">
+</p>
+<p align="center">
+    <img src="https://github.com/Komak57/Bookmarker/blob/dev/docs/Bookmarker_screenshot_options.png?raw=true" width="265">
+    <img src="https://github.com/Komak57/Bookmarker/blob/dev/docs/Bookmarker_screenshot_small.png?raw=true" width="265">
+    <img src="https://github.com/Komak57/Bookmarker/blob/dev/docs/Bookmarker_screenshot_small2.png?raw=true" width="265">
 </p>
 
 ## Compatibility and Development
