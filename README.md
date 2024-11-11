@@ -20,6 +20,13 @@ Selectively track domains for content pertinent to episode or chapter related me
 
 > **NOTE**: No domain-specific settings have been added. All sites will track based on your per-domain settings only.
 
+### Visual Aid
+
+<p align="center">
+  <img src="https://github.com/Komak57/Bookmarker/blob/dev/docs/Bookmarker_screenshot.png?raw=true" width="50%">
+  <img src="https://github.com/Komak57/Bookmarker/blob/dev/docs/Bookmarker_screenshot_options.png?raw=true" width="50%">
+</p>
+
 ## Compatibility and Development
 
 This extension is **still in development**. Bugs may squeeze through unseen. There are still numerous features desired for the extension. It currently works for most platforms currently tested on, but has not been tested on all platforms. Please be patient as additional bugs are found, squashed, and features are expanded.
