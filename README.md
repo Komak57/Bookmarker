@@ -1,5 +1,7 @@
 # Auto-tracking Manga, Anime, Movies
 
+Selectively track domains for content pertinent to episode or chapter related media. The primary focus is Anime and Manga, but is expansive enough to cover TV series, movies, live streams and the like. Note, only Anime and Manga are compatible with the cross-platform features until an API can be added for other types of media. This extension does not add episodes or seasons to your browser bookmarks, but maintains the list exclusively in the extension and icon.
+
 ## Features
 
 - **Track Anime, Manga, Movies and Other**
@@ -17,8 +19,6 @@
 ### Additional Notes
 
 > **NOTE**: No domain-specific settings have been added. All sites will track based on your per-domain settings only.
-
-Selectively track domains for content pertinent to episode or chapter related media. The primary focus is Anime and Manga, but is expansive enough to cover TV series, movies, live streams and the like. Note, only Anime and Manga are compatible with the cross-platform features until an API can be added for other types of media. This extension does not add episodes or seasons to your browser bookmarks, but maintains the list exclusively in the extension and icon.
 
 ## Compatibility and Development
 
