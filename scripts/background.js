@@ -103,9 +103,14 @@ async function addEpisode(domain, settings, tab) {
     if (settings.ot == 2 || settings.os == 2 || settings.oe == 2) {
         // Wait for dynamic changes to finish (Crunchyroll)
         await delayExecution(3000);
+        const alreadyHasPermission = await hasPermission(tab.url);
+        if (!alreadyHasPermission) {
+            log('error', 'Permission to getDocumentContent denied by user.');
+            return;
+        }
         // Get current content
         chrome.scripting.executeScript({
-            target: { tabId: tab.id },
+            target: { tabId: tab.id, allFrames: true },
             func: getDocumentContent, // The function to be executed in the content script
             args: [settings]
         }, (results) => {
@@ -117,6 +122,10 @@ async function addEpisode(domain, settings, tab) {
             if (results) {
                 if (results[0]) {
                     const documentContent = results[0].result;
+                    if (!documentContent) {
+                        console.log(`Page Content not found. Results:`, results);
+                        // log('log', `Page Content not found. Results:`, results[0]);
+                    }
                     log('log', 'Current Document content retrieved. ', documentContent);
 
                     const details = getDetails(domain, documentContent, tab, settings);
@@ -282,14 +291,17 @@ function getDocumentContent(settings) {
     const data = {
         title: 'ignored',
         season: 'ignored',
-        episode: 'ignored'
-    }
+        episode: 'ignored',
+        errorType: null,
+        errorMessage: null,
+        errorStack: null
+    };
 
-    log('log', 'Querying for content.');
+
+    // log('log', 'Querying for content.');
     try {
         // Example: Get the inner HTML of the body (you can modify this as needed)
-        if (settings.otm) {
-
+        if (settings.ot) {
             try {
                 data.title = document.querySelector(settings.otm).innerText;
             } catch (err) {
@@ -299,14 +311,17 @@ function getDocumentContent(settings) {
                         data.title = match[0];
                     else
                         data.title = "Match Not Found";
-                } else
-                    data.title = err.message;
+                } else {
+                    data.errorType = err.name;
+                    data.errorMessage = err.message;
+                    // data.errorStack = err.stack;
+                }
             }
             if (!data.title)
                 data.title = "Match was Empty";
         }
         // Example: Get the inner HTML of the body (you can modify this as needed)
-        if (settings.osm) {
+        if (settings.os) {
             try {
                 data.season = document.querySelector(settings.osm).innerText;
             } catch (err) {
@@ -316,14 +331,17 @@ function getDocumentContent(settings) {
                         data.season = match[0];
                     else
                         data.season = "Match Not Found";
-                } else
-                    data.season = err.message;
+                } else {
+                    data.errorType = err.name;
+                    data.errorMessage = err.message;
+                    // data.errorStack = err.stack;
+                }
             }
             if (!data.season)
                 data.season = "Match was Empty";
         }
         // Example: Get the inner HTML of the body (you can modify this as needed)
-        if (settings.oem) {
+        if (settings.oe) {
             try {
                 data.episode = document.querySelector(settings.oem).innerText;
             } catch (err) {
@@ -334,17 +352,22 @@ function getDocumentContent(settings) {
                         data.episode = match[0];
                     else
                         data.episode = "Match Not Found";
-                } else
-                    data.episode = `${err.name}: ${err.message}`;
+                } else {
+                    data.errorType = err.name;
+                    data.errorMessage = err.message;
+                    // data.errorStack = err.stack;
+                }
             }
             if (!data.episode)
                 data.episode = "Match was Empty";
         }
     } catch (error) {
-        log('log', 'Unable to query document.');
-        data.title = `${error.name}: ${error.message}`;
-        data.season = error.stack;
+        // log('error', 'Unable to query document.');
+        data.errorType = err.name;
+        data.errorMessage = err.message;
+        // data.errorStack = err.stack;
     }
+    // log('log', `getDocumentContent returns {${data.title}, ${data.season}, ${data.episode}}`);
     return data;
 }
 
@@ -368,7 +391,7 @@ function showWarningNotification(title, season, episode) {
     });
 }
 
-function getDetails(domain, document, tab, settings) {
+function getDetails(domain, documentContent, tab, settings) {
     let data = {
         matched: false,
         season: null,
@@ -386,9 +409,9 @@ function getDetails(domain, document, tab, settings) {
             getSeasonDetails(data, tab.title.trim(), settings);
             break;
         case 2:
-            if (document && document.hasOwnProperty('season')) {
+            if (documentContent && documentContent.hasOwnProperty('season')) {
                 log('log', `Searching Season from Selector`);
-                getSeasonDetails(data, document.season.trim(), settings);
+                getSeasonDetails(data, documentContent.season.trim(), settings);
             } else {
                 log('warn', `Could not find season data.`);
                 data.season = 1;
@@ -411,9 +434,9 @@ function getDetails(domain, document, tab, settings) {
             getEpisodeDetails(data, tab.episode.trim(), settings);
             break;
         case 2:
-            if (document && document.hasOwnProperty('episode')) {
-                log('log', `Searching Episode using: '${document.episode.trim()}'`);
-                getEpisodeDetails(data, document.episode.trim(), settings);
+            if (documentContent && documentContent.hasOwnProperty('episode')) {
+                log('log', `Searching Episode using: '${documentContent.episode.trim()}'`);
+                getEpisodeDetails(data, documentContent.episode.trim(), settings);
             } else {
                 log('warn', `Could not find episode data.`);
                 if (!settings.ie)
@@ -438,16 +461,21 @@ function getDetails(domain, document, tab, settings) {
             getTitleDetails(data, tab.title.trim(), settings);
             break;
         case 2:
-            if (document && document.hasOwnProperty('title')) {
-                log('log', `Searching Title from Selector`);
-                getTitleDetails(data, document.title.trim(), settings);
+            if (documentContent) {
+                if (documentContent.hasOwnProperty('title')) {
+                    log('log', `Searching Title from Selector`);
+                    getTitleDetails(data, documentContent.title.trim(), settings);
+                } else {
+                    log('warn', `Could not find title data.`);
+                    return null;
+                }
             } else {
-                log('warn', `Could not find title data.`);
+                log('warn', `Could not find page data.`);
                 return null;
             }
             break;
         default:
-            log('log', `ERROR: obtainTitleFrom = '${settings.ot}'`);
+            log('warn', `ERROR: obtainTitleFrom = '${settings.ot}'`);
             settings['ot'] = 0;
             log('log', `Searching Title from URL`);
             getTitleDetails(data, new URL(tab.url).pathname, settings);

@@ -141,7 +141,7 @@ function loadDomainSettings() {
                 _obtainSeasonFromSelect.appendChild(opt);
             }
             _obtainSeasonFromSelect.addEventListener('change', () => {
-                updateDomainSetting(trackedDomains, domain, 'ot', parseInt(_obtainSeasonFromSelect.value))
+                updateDomainSetting(trackedDomains, domain, 'os', parseInt(_obtainSeasonFromSelect.value))
                 if (settings.os == 2) {
                     querySeasonMatchLabel.style.display = 'block';
                     querySeasonMatchTextarea.style.display = 'block';
@@ -188,7 +188,7 @@ function loadDomainSettings() {
                 _obtainEpisodeFromSelect.appendChild(opt);
             }
             _obtainEpisodeFromSelect.addEventListener('change', () => {
-                updateDomainSetting(trackedDomains, domain, 'ot', parseInt(_obtainEpisodeFromSelect.value))
+                updateDomainSetting(trackedDomains, domain, 'oe', parseInt(_obtainEpisodeFromSelect.value))
                 if (settings.oe == 2) {
                     queryEpisodeMatchLabel.style.display = 'block';
                     queryEpisodeMatchTextarea.style.display = 'block';
