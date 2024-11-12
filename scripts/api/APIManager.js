@@ -85,15 +85,15 @@ class ThrottledQueue {
         this.isProcessing = true;
 
         while (this.queue.length > 0) {
+            const task = this.queue.shift();
             // Calculate remaining delay time
             const now = Date.now();
             const timeSinceLastRequest = now - this.lastRequest;
-            if (timeSinceLastRequest < api_call.delay) {
+            if (timeSinceLastRequest < task.api_call.delay) {
                 // Wait an exact time
-                const waitTime = api_call.delay - timeSinceLastRequest;
+                const waitTime = task.api_call.delay - timeSinceLastRequest;
                 await new Promise(resolve => setTimeout(resolve, waitTime));
             }
-            const task = this.queue.shift();
             const api_data = await task.api_call.fetch(task.details, task.tab, task.settings);
             // Send message to background that our request completed
             chrome.runtime.sendMessage({ action: 'addEpisode', data: api_data, tab: task.tab, settings: task.settings });
