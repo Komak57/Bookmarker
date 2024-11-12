@@ -32,7 +32,7 @@ async function displayEpisodes(domain, url) {
     // const Domains = getDomains()
     getDomains()
         .then((Domains) => {
-            settings = Domains[domain];
+            const settings = Domains[domain];
 
             // const episodes = getEpisodes();
             getEpisodes()
@@ -241,8 +241,8 @@ async function showTrackButton(domain) {
 
     const title = document.createElement("div");
     title.classList.add("episode-warning");
-    const alreadyHasPermission = await hasPermission(URL_PATTERN.replace('$d', domain));
-    if (alreadyHasPermission)
+    const alreadyhasPermission = await hasPermission(URL_PATTERN.replace('$d', domain));
+    if (alreadyhasPermission)
         title.textContent = ``;
     else
         title.textContent = `This Extension requires permissions to read/write on this domain for the purposes of finding titles, episode/chapter numbers, and related text in the page content.`;
@@ -252,7 +252,7 @@ async function showTrackButton(domain) {
     details.classList.add("warning-details");
 
     const trackButton = document.createElement('button');
-    if (alreadyHasPermission)
+    if (alreadyhasPermission)
         trackButton.textContent = `Track ${domain}`;
     else
         trackButton.textContent = `Request Permission`;
@@ -346,8 +346,8 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
 
         if (Domains && Domains.hasOwnProperty(currentDomain)) {
             // Make sure we still have permissions for this domain
-            const alreadyHasPermission = await hasPermission(URL_PATTERN.replace('$d', currentDomain));
-            if (alreadyHasPermission) {
+            const alreadyhasPermission = await hasPermission(URL_PATTERN.replace('$d', currentDomain));
+            if (alreadyhasPermission) {
                 const tabs = document.getElementById('tabs');
                 tabs.style.display = "block";
                 showTrackEpButton(currentDomain, currentTab.id, currentTab.url, currentTab.title);

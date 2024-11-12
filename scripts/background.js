@@ -1,5 +1,10 @@
-// Import utils.js in background.js
-importScripts('utils.js');
+// Import js in background.js
+importScripts('/scripts/utils.js');
+importScripts('/scripts/api/apiManager.js');
+
+// Initialize APIManager as a global
+const apiManager = new APIManager();
+
 /* Domain Struct
     "anitaku.pe":{"i":001,"c":0,"ot":0,"otm":"","os":0,"osm":"","oe":0,"oem":"","ie":0,"n":1,"s":0}
     string d        -- Domain
@@ -61,20 +66,40 @@ chrome.runtime.onInstalled.addListener(function(details) {
 
 // Handle messages from popup.js
 chrome.runtime.onMessage.addListener(async(request, sender, sendResponse) => {
-    if (request.action === 'trackDomain') {
-        trackDomain(request.domain);
-        sendResponse({ status: "success" });
-    } else if (request.action === 'trackEpisode') {
-        log('log', `Domain Tracking Requested: ${request.domain}`);
-
-        getDomains().then((Domains) => {
-            //const domain = getDomainFromUrl(request.domain);
-            if (Domains.hasOwnProperty(request.domain)) {
-                const settings = Domains[request.domain];
-                settings['forced'] = true;
-                addEpisode(request.domain, settings, { id: request.id, url: request.url, title: request.title });
+    switch (request.action) {
+        case 'trackDomain':
+            {
+                trackDomain(request.domain);
+                sendResponse({ status: "success" });
             }
-        });
+            break;
+        case 'trackEpisode':
+            {
+                log('log', `Domain Tracking Requested: ${request.domain}`);
+
+                getDomains().then((Domains) => {
+                    //const domain = getDomainFromUrl(request.domain);
+                    if (Domains.hasOwnProperty(request.domain)) {
+                        const settings = Domains[request.domain];
+                        settings['forced'] = true;
+                        addEpisode(request.domain, settings, { id: request.id, url: request.url, title: request.title });
+                    }
+                });
+            }
+            break;
+        case 'addEpisode':
+            {
+                const _settings = request.settings;
+                // Force the update of all API details
+                _settings['cloud'] = true;
+                addEpisodeToStorage(request.api_data, request.tab, _settings);
+            }
+            break;
+        default:
+            {
+                log('log', `Unhandled Request: ${request.action}`);
+            }
+            break;
     }
 });
 
@@ -85,7 +110,7 @@ chrome.tabs.onUpdated.addListener(async(tabId, changeInfo, tab) => {
 
         const domain = getDomainFromUrl(tab.url);
         log('log', `Domain Page Loaded: ${domain}`);
-        // let Domains = await asyncGetDomains();
+        // let Domains = await asyncutils.getDomains();
         getDomains().then((Domains) => {
             // Check if this domain is tracked
             if (Domains.hasOwnProperty(domain)) {
@@ -104,8 +129,8 @@ async function addEpisode(domain, settings, tab) {
         // Wait for dynamic changes to finish (Crunchyroll)
         await delayExecution(3000);
         const domain = getDomainFromUrl(tab.url);
-        const alreadyHasPermission = await hasPermission(URL_PATTERN.replace('$d', domain));
-        if (!alreadyHasPermission) {
+        const alreadyhasPermission = await hasPermission(URL_PATTERN.replace('$d', domain));
+        if (!alreadyhasPermission) {
             log('error', 'Permission to getDocumentContent denied by user.');
             return;
         }
@@ -157,135 +182,149 @@ async function addEpisode(domain, settings, tab) {
         const data = getFromAPI(details, tab, settings);
     }
 }
-
-function getFromAPI(details, tab, settings) {
-    // TODO: Cache requests to avoid unnecessary API calls when reading quickly
-    switch (categories[settings.c]) {
-        case "Anime":
-            {
-                // Get title from API - https://api.jikan.moe/v4/anime?q=
-                fetchJikanAnime(details)
-                .then(retA => {
-                    if (!retA.json.data[0]) {
-                        log('error', `JIKAN Data[0] not Found searching ${tab.url}`);
-                        return;
-                    }
-                    fetchJikanAnimeEpisodes(retA.json.data[0].mal_id)
-                        .then(retEp => {
-                            log('log', `JIKAN Found ${retEp.json.data.length} episodes for ${retA.json.data[0].mal_id}`);
-                            const jikan = {
-                                id: retA.json.data[0].mal_id,
-                                c: settings.c, // Anime
-                                d: settings.i,
-                                f: 0,
-                                t: details.title,
-                                e: details.episode,
-                                r: retEp.json.data.length,
-                                n: retA.json.data[0].episodes,
-                                p: retA.json.data[0].images.jpg.small_image_url,
-                                l: "tab.url", // URL Last Viewed
-                                u: Date.now() // Track the time it was viewed
-                            };
-                            // Try to get Title from Jikan.
-                            // NOTE: It can be in an array called "Titles", or as a collection of objects called "title(_language?)"
-                            const titles = retA.json.data[0].titles;
-                            if (titles) {
-                                // Check array of titles for english title
-                                let title = titles[0].title;
-                                jikan.t = title; // Default to first-found (usually Default)
-                                titles.forEach(t => {
-                                    if (t.type == "English") // Found english
-                                        jikan.t = t.title;
-                                    // title = t.title;
-                                });
-                                log('log', `JIKAN Success: ${jikan.id} / ${jikan.t}`);
-                            } else {
-                                if (retA.json.data[0].title) // default
-                                    jikan.t = retA.json.data[0].title;
-                                if (retA.json.data[0].title_english) // english
-                                    jikan.t = retA.json.data[0].title_english;
-                            }
-                            // replace title
-                            // ret.data.title = title;
-                            addEpisodeToStorage(jikan, tab, settings);
-                        });
-                })
-                .catch(error => log('error', `JIKAN Error: ${error}`));
-                break;
-            }
-        case "Manga":
-            {
-                // Get title from API - https://api.jikan.moe/v4/manga?q=
-                fetchJikanManga(details)
-                .then(ret => {
-                    if (!ret.json.data[0]) {
-                        log('error', `JIKAN Data[0] not Found searching ${tab.url}`);
-                        return;
-                    }
-                    const jikan = {
-                        id: ret.json.data[0].mal_id,
-                        c: settings.c, // Manga
-                        d: settings.i,
-                        f: 0,
-                        t: details.title,
-                        e: details.episode,
-                        r: details.episode,
-                        n: ret.json.data[0].chapters, // Jikan uses chapters for anime, not episodes
-                        p: ret.json.data[0].images.jpg.small_image_url,
-                        l: "tab.url", // URL Last Viewed
-                        u: Date.now() // Track the time it was viewed
-                    };
-                    // Try to get Title from Jikan.
-                    // NOTE: It can be in an array called "Titles", or as a collection of objects called "title(_language?)"
-                    const titles = ret.json.data[0].titles;
-                    if (titles) {
-                        // Check array of titles for english title
-                        let title = titles[0].title;
-                        jikan.t = title; // Default to first-found (usually Default)
-                        titles.forEach(t => {
-                            if (t.type == "English") // Found english
-                                jikan.t = t.title;
-                            // title = t.title;
-                        });
-                        log('log', `JIKAN Success: ${jikan.id} / ${jikan.t}`);
-                    } else {
-                        if (ret.json.data[0].title) // default
-                            jikan.t = ret.json.data[0].title;
-                        if (ret.json.data[0].title_english) // english
-                            jikan.t = ret.json.data[0].title_english;
-                    }
-                    // replace title
-                    // ret.data.title = title;
-                    addEpisodeToStorage(jikan, tab, settings);
-                })
-                .catch(error => log('error', `JIKAN Error: ${error}`));
-                break;
-            }
-        case "Movies":
-            // Movies not supported yet. Treat as "Other"
-        case "Other":
-            // Default is "Other"
-        default:
-            {
-                // TODO: Get title from existing match
-                const ep = {
-                    id: details.title,
-                    c: settings.c, // Other
-                    d: settings.i,
-                    f: 0,
-                    t: details.title,
-                    e: details.episode,
-                    r: details.episode,
-                    n: details.episode,
-                    p: "", // Empty thumbnail removes it from the Episode Card
-                    l: "tab.url", // URL Last Viewed
-                    u: Date.now() // Track the time it was viewed
-                };
-                log('log', `Raw Success: ${ep.id} / ${ep.t}`);
-                addEpisodeToStorage(ep, tab, settings);
-                break;
-            }
+async function getFromAPI(details, tab, settings) {
+    try {
+        // Send API Request, and await message 'addEpisode'
+        apiManager.request(categories[settings.c], details, tab, settings);
+        // apiManager.request(categories[settings.c], details, tab, settings).then((data) => {
+        //     if (!data) {
+        //         log('error', `API.request returned null.`);
+        //         return;
+        //     }
+        //     addEpisodeToStorage(data, tab, settings);
+        // });
+        // const data = await apiCall.fetch(details, tab, settings);
+    } catch (error) {
+        log('error', `Unable to fetch from API. <${error.type}> ${error.message}\n${error.stack}`);
+        return;
     }
+    // TODO: Cache requests to avoid unnecessary API calls when reading quickly
+    // switch (categories[settings.c]) {
+    //     case "Anime":
+    //         {
+    //             // Get title from API - https://api.jikan.moe/v4/anime?q=
+    //             fetchJikanAnime(details)
+    //             .then(retA => {
+    //                 if (!retA.json.data[0]) {
+    //                     log('error', `JIKAN Data[0] not Found searching ${tab.url}`);
+    //                     return;
+    //                 }
+    //                 fetchJikanAnimeEpisodes(retA.json.data[0].mal_id)
+    //                     .then(retEp => {
+    //                         log('log', `JIKAN Found ${retEp.json.data.length} episodes for ${retA.json.data[0].mal_id}`);
+    //                         const jikan = {
+    //                             id: retA.json.data[0].mal_id,
+    //                             c: settings.c, // Anime
+    //                             d: settings.i,
+    //                             f: 0,
+    //                             t: details.title,
+    //                             e: details.episode,
+    //                             r: retEp.json.data.length,
+    //                             n: retA.json.data[0].episodes,
+    //                             p: retA.json.data[0].images.jpg.small_image_url,
+    //                             l: "tab.url", // URL Last Viewed
+    //                             u: Date.now() // Track the time it was viewed
+    //                         };
+    //                         // Try to get Title from Jikan.
+    //                         // NOTE: It can be in an array called "Titles", or as a collection of objects called "title(_language?)"
+    //                         const titles = retA.json.data[0].titles;
+    //                         if (titles) {
+    //                             // Check array of titles for english title
+    //                             let title = titles[0].title;
+    //                             jikan.t = title; // Default to first-found (usually Default)
+    //                             titles.forEach(t => {
+    //                                 if (t.type == "English") // Found english
+    //                                     jikan.t = t.title;
+    //                                 // title = t.title;
+    //                             });
+    //                             log('log', `JIKAN Success: ${jikan.id} / ${jikan.t}`);
+    //                         } else {
+    //                             if (retA.json.data[0].title) // default
+    //                                 jikan.t = retA.json.data[0].title;
+    //                             if (retA.json.data[0].title_english) // english
+    //                                 jikan.t = retA.json.data[0].title_english;
+    //                         }
+    //                         // replace title
+    //                         // ret.data.title = title;
+    //                         addEpisodeToStorage(jikan, tab, settings);
+    //                     });
+    //             })
+    //             .catch(error => log('error', `JIKAN Error: ${error}`));
+    //             break;
+    //         }
+    //     case "Manga":
+    //         {
+    //             // Get title from API - https://api.jikan.moe/v4/manga?q=
+    //             fetchJikanManga(details)
+    //             .then(ret => {
+    //                 if (!ret.json.data[0]) {
+    //                     log('error', `JIKAN Data[0] not Found searching ${tab.url}`);
+    //                     return;
+    //                 }
+    //                 const jikan = {
+    //                     id: ret.json.data[0].mal_id,
+    //                     c: settings.c, // Manga
+    //                     d: settings.i,
+    //                     f: 0,
+    //                     t: details.title,
+    //                     e: details.episode,
+    //                     r: details.episode,
+    //                     n: ret.json.data[0].chapters, // Jikan uses chapters for anime, not episodes
+    //                     p: ret.json.data[0].images.jpg.small_image_url,
+    //                     l: "tab.url", // URL Last Viewed
+    //                     u: Date.now() // Track the time it was viewed
+    //                 };
+    //                 // Try to get Title from Jikan.
+    //                 // NOTE: It can be in an array called "Titles", or as a collection of objects called "title(_language?)"
+    //                 const titles = ret.json.data[0].titles;
+    //                 if (titles) {
+    //                     // Check array of titles for english title
+    //                     let title = titles[0].title;
+    //                     jikan.t = title; // Default to first-found (usually Default)
+    //                     titles.forEach(t => {
+    //                         if (t.type == "English") // Found english
+    //                             jikan.t = t.title;
+    //                         // title = t.title;
+    //                     });
+    //                     log('log', `JIKAN Success: ${jikan.id} / ${jikan.t}`);
+    //                 } else {
+    //                     if (ret.json.data[0].title) // default
+    //                         jikan.t = ret.json.data[0].title;
+    //                     if (ret.json.data[0].title_english) // english
+    //                         jikan.t = ret.json.data[0].title_english;
+    //                 }
+    //                 // replace title
+    //                 // ret.data.title = title;
+    //                 addEpisodeToStorage(jikan, tab, settings);
+    //             })
+    //             .catch(error => log('error', `JIKAN Error: ${error}`));
+    //             break;
+    //         }
+    //     case "Movies":
+    //         // Movies not supported yet. Treat as "Other"
+    //     case "Other":
+    //         // Default is "Other"
+    //     default:
+    //         {
+    //             // TODO: Get title from existing match
+    //             const ep = {
+    //                 id: details.title,
+    //                 c: settings.c, // Other
+    //                 d: settings.i,
+    //                 f: 0,
+    //                 t: details.title,
+    //                 e: details.episode,
+    //                 r: details.episode,
+    //                 n: details.episode,
+    //                 p: "", // Empty thumbnail removes it from the Episode Card
+    //                 l: "tab.url", // URL Last Viewed
+    //                 u: Date.now() // Track the time it was viewed
+    //             };
+    //             log('log', `Raw Success: ${ep.id} / ${ep.t}`);
+    //             addEpisodeToStorage(ep, tab, settings);
+    //             break;
+    //         }
+    // }
 }
 // The function that will run in the context of the content script
 function getDocumentContent(settings) {
@@ -504,69 +543,6 @@ function getTitleDetails(data, context, settings) {
         .join(' ');
 }
 
-async function fetchJikanAnime(details) {
-    const url = `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(details.title)}&limit=1`;
-    log('log', `Attempting JIKAN API: ${url}`);
-
-    try {
-        const response = await fetch(url); // Await the fetch response
-        log('log', 'Response status:', response.status); // Should log the status code
-
-        if (response.ok) { // Checks if status is in the range 200-299
-            const json = await response.json(); // Parse JSON if response is successful
-            log('log', `JIKAN: Data Retrieved`);
-            return { data: details, json: json };
-        } else {
-            log('error', `Bad response from JIKAN: ${response.status}`);
-            return { data: details, json: null };
-        }
-    } catch (error) {
-        log('error', 'Fetch error:', error); // Handle network errors
-        return { data: details, json: null };
-    }
-}
-async function fetchJikanAnimeEpisodes(animeID) {
-    const url = `https://api.jikan.moe/v4/anime/${animeID}/episodes`;
-    log('log', `Attempting JIKAN API: ${url}`);
-
-    try {
-        const response = await fetch(url); // Await the fetch response
-        log('log', 'Response status:', response.status); // Should log the status code
-
-        if (response.ok) { // Checks if status is in the range 200-299
-            const json = await response.json(); // Parse JSON if response is successful
-            log('log', `JIKAN: Data Retrieved`);
-            return { animeID: animeID, json: json };
-        } else {
-            log('error', `Bad response from JIKAN: ${response.status}`);
-            return { animeID: animeID, json: json };
-        }
-    } catch (error) {
-        log('error', 'Fetch error:', error); // Handle network errors
-        return { animeID: animeID, json: null };
-    }
-}
-async function fetchJikanManga(details) {
-    const url = `https://api.jikan.moe/v4/manga?q=${encodeURIComponent(details.title)}&limit=1`;
-    log('log', `Attempting JIKAN API: ${url}`);
-
-    try {
-        const response = await fetch(url); // Await the fetch response
-        log('log', 'Response status:', response.status); // Should log the status code
-
-        if (response.ok) { // Checks if status is in the range 200-299
-            const json = await response.json(); // Parse JSON if response is successful
-            log('log', `JIKAN: Data Retrieved`);
-            return { data: details, json: json };
-        } else {
-            log('error', `Bad response from JIKAN: ${response.status}`);
-            return { data: details, json: null };
-        }
-    } catch (error) {
-        log('error', 'Fetch error:', error); // Handle network errors
-        return { data: details, json: null };
-    }
-}
 // Function to extract Season information
 function getSeasonDetails(data, context, settings) {
     // Find the season
@@ -601,9 +577,9 @@ function getEpisodeDetails(data, context, settings) {
 }
 let isWindowCreated = false;
 // Function to add episode to storage
-function addEpisodeToStorage(jikan, tab, settings) {
+function addEpisodeToStorage(api_data, tab, settings) {
     // If episode didn't match, and we're not allowed to skip
-    if (jikan.episode == 0 && settings.ie == 0) {
+    if (api_data.episode == 0 && settings.ie == 0) {
         log('log', `Ignored: ${((settings.ot == 2) ? tab.title : tab.url).trim().toLowerCase()}, no episode data found.`);
         return;
     }
@@ -615,37 +591,45 @@ function addEpisodeToStorage(jikan, tab, settings) {
             //     const episodes = _data.episodes || {};
 
             // Check if the title already exists in storage
-            if (episodes[jikan.id]) {
-                if (jikan.e <= episodes[jikan.id].e) {
-                    episodes[jikan.id].l = new URL(tab.url).pathname; // update URL
-                    episodes[jikan.id].r = jikan.r;
-                    episodes[jikan.id].n = jikan.n;
-                    episodes[jikan.id].p = jikan.p;
-                    log('log', `Episode already watched: ${jikan.id}.`);
-                } else if (isEpisodeSequential(jikan.e.toString(), episodes[jikan.id].e.toString()) || settings.forced) {
+            if (episodes[api_data.id]) {
+                if (settings.cloud) {
+                    // Update the episode if we got data for cloudEpisodes
+                    // C, D, E, L shared from cloudEpisodes
+                    // F, U already processed
+                    episodes[api_data.id].t = api_data.t;
+                    episodes[api_data.id].r = api_data.r;
+                    episodes[api_data.id].n = api_data.n;
+                    episodes[api_data.id].p = api_data.p;
+                } else if (api_data.e <= episodes[api_data.id].e) {
+                    episodes[api_data.id].l = new URL(tab.url).pathname; // update URL
+                    episodes[api_data.id].r = api_data.r;
+                    episodes[api_data.id].n = api_data.n;
+                    episodes[api_data.id].p = api_data.p;
+                    log('log', `Episode already watched: ${api_data.id}.`);
+                } else if (isEpisodeSequential(api_data.e.toString(), episodes[api_data.id].e.toString()) || settings.forced) {
                     // Update the episode if it is sequential
-                    episodes[jikan.id].d = settings.i; // we're changing URL, so we need to change the domain it links to as well
-                    episodes[jikan.id].l = new URL(tab.url).pathname; // update URL
+                    episodes[api_data.id].d = settings.i; // we're changing URL, so we need to change the domain it links to as well
+                    episodes[api_data.id].l = new URL(tab.url).pathname; // update URL
                     // episodes[data.title].season = data.season; // fix season in case we changed matching parameters
-                    episodes[jikan.id].e = jikan.e;
-                    episodes[jikan.id].r = jikan.r;
-                    episodes[jikan.id].n = jikan.n;
-                    episodes[jikan.id].f = jikan.f;
-                    episodes[jikan.id].p = jikan.p;
-                    episodes[jikan.id].u = Date.now();
-                    log('log', `Updated: ${jikan.id} - Episode ${jikan.e}`);
+                    episodes[api_data.id].e = api_data.e;
+                    episodes[api_data.id].r = api_data.r;
+                    episodes[api_data.id].n = api_data.n;
+                    episodes[api_data.id].f = api_data.f;
+                    episodes[api_data.id].p = api_data.p;
+                    episodes[api_data.id].u = Date.now();
+                    log('log', `Updated: ${api_data.id} - Episode ${api_data.e}`);
                 } else {
                     // Notify because the episode is tracked, but watched out of order
-                    log('log', `Episode watched out of order for: ${jikan.id}. No updates made.`);
+                    log('log', `Episode watched out of order for: ${api_data.id}. No updates made.`);
                     if (settings.n) {
                         //
                         // Generate a notification window to warn the user that they may have skipped an episode
                         //
-                        const episodeUrl = encodeURIComponent(episodes[jikan.id].l); // encode the original URL
-                        const episodeTitle = encodeURIComponent(episodes[jikan.id].t); // encode the original URL
+                        const episodeUrl = encodeURIComponent(episodes[api_data.id].l); // encode the original URL
+                        const episodeTitle = encodeURIComponent(episodes[api_data.id].t); // encode the original URL
                         const popupWidth = 400;
                         const popupHeight = 300;
-
+                        // Patched to ignore when we're receiving data from cloudEpisodes
                         if (!isWindowCreated) {
                             isWindowCreated = true;
                             chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -686,24 +670,24 @@ function addEpisodeToStorage(jikan, tab, settings) {
                 }
             } else {
                 // Add the episode if it is Episode 1, or we're ignoring episode match, or we're forcably adding the episode
-                if (parseInt(jikan.e) === 1 || settings.ie || settings.forced) {
+                if (parseInt(api_data.e) === 1 || settings.ie || settings.forced) {
                     //const domainID = Domains[domain].i;
-                    episodes[jikan.id] = {
+                    episodes[api_data.id] = {
                         c: settings.c, // Match Domain Filter
                         d: settings.i,
-                        f: jikan.f,
-                        t: jikan.t,
-                        e: jikan.e,
-                        r: jikan.r,
-                        n: jikan.n,
-                        p: jikan.p,
+                        f: api_data.f,
+                        t: api_data.t,
+                        e: api_data.e,
+                        r: api_data.r,
+                        n: api_data.n,
+                        p: api_data.p,
                         l: new URL(tab.url).pathname, // URL Last Viewed
                         u: Date.now() // Track the time it was viewed
                     };
-                    log('log', `Tracked: ${jikan.t} - Episode ${jikan.e} of ${jikan.n}`);
+                    log('log', `Tracked: ${api_data.t} - Episode ${api_data.e} of ${api_data.n}`);
                 } else {
                     // TODO: Handle force-track-episode
-                    log('log', `Only Episode 1 can be added for new titles. Episode ${jikan.e} not tracked.`);
+                    log('log', `Only Episode 1 can be added for new titles. Episode ${api_data.e} not tracked.`);
                 }
             }
 

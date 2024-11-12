@@ -142,21 +142,26 @@ async function getEpisodes() {
                         if (Object.keys(cloudEpisodes).length > 0) {
                             // TODO: Queue remaining cloudEpisodes for API data retrieval
                             log('log', `${Object.keys(cloudEpisodes).length} Episodes from the Cloud need to be re-obtained.`);
+                            getDomains().then((Domains) => {
+                                for (let id in cloudEpisodes) {
+                                    // Add temporary details immediately
+                                    localEpisodes[id] = {
+                                            c: cloudEpisodes[id].c,
+                                            d: cloudEpisodes[id].d,
+                                            f: 0,
+                                            t: `Title ${id}`,
+                                            e: cloudEpisodes[id].e,
+                                            r: cloudEpisodes[id].e,
+                                            n: cloudEpisodes[id].e,
+                                            p: "",
+                                            l: cloudEpisodes[id].l,
+                                            u: Date.now()
+                                        }
+                                        // Send an API Request to get additional details later...
 
-                            for (let id in cloudEpisodes) {
-                                localEpisodes[id] = {
-                                    c: cloudEpisodes[id].c,
-                                    d: cloudEpisodes[id].d,
-                                    f: 0,
-                                    t: `Title ${id}`,
-                                    e: cloudEpisodes[id].e,
-                                    r: cloudEpisodes[id].e,
-                                    n: cloudEpisodes[id].e,
-                                    p: "",
-                                    l: cloudEpisodes[id].l,
-                                    u: Date.now()
+                                    apiManager.request(categories[settings.c], details, { id: null, url: `https://${Domains[cloudEpisodes[id].d]}${cloudEpisodes[id].l.startsWith("/")? "":"/"}${cloudEpisodes[id].l}`, title: null }, settings);
                                 }
-                            }
+                            });
                         }
 
                         if (localEpisodes)
@@ -329,8 +334,8 @@ function VersionUpdate() {
                 .then((domains) => {
                     getEpisodes()
                         .then((episodes) => {
-                            [major, minor, patch] = lastVersion.split('.');
-                            [_major, _minor, _patch] = manifestData.version.split('.');
+                            const [major, minor, patch] = lastVersion.split('.');
+                            const [_major, _minor, _patch] = manifestData.version.split('.');
                             switch (`${major}.${minor}`) {
                                 case '1.2': // 1.2.0
                                     log('log', `No Changes Required for v1.2`);
