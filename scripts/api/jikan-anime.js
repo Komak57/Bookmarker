@@ -2,8 +2,8 @@ class JIKAN_Anime extends APIClass {
     constructor() {
         super();
         this.throttle = 'jikan';
-        // 60 per minute, 2 calls per request, pad the delay for [anime,anime]
-        this.delay = 3000;
+        // 60 per minute, 2 calls per request, waits 1 second between calls
+        this.delay = 1000;
     }
 
     // static throttle = 'jikan';
@@ -85,6 +85,8 @@ class JIKAN_Anime extends APIClass {
         }
     }
     async fetchExtra(animeID) {
+        // Wait an extra second, because we're making 2 calls for 1 api_call
+        await delayExecution(1000);
         const url = `https://api.jikan.moe/v4/anime/${animeID}/episodes`;
         log('log', `Attempting JIKAN API: ${url}`);
 

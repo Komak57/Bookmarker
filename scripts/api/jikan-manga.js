@@ -3,7 +3,7 @@ class JIKAN_Manga extends APIClass {
         super();
         this.throttle = 'jikan';
         // 60 per minute, 1 call per request, pad for [manga,manga,anime]
-        this.delay = 1500;
+        this.delay = 1000;
     }
 
     // ====================================
