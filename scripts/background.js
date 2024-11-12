@@ -103,7 +103,8 @@ async function addEpisode(domain, settings, tab) {
     if (settings.ot == 2 || settings.os == 2 || settings.oe == 2) {
         // Wait for dynamic changes to finish (Crunchyroll)
         await delayExecution(3000);
-        const alreadyHasPermission = await hasPermission(tab.url);
+        const domain = getDomainFromUrl(tab.url);
+        const alreadyHasPermission = await hasPermission(URL_PATTERN.replace('$d', domain));
         if (!alreadyHasPermission) {
             log('error', 'Permission to getDocumentContent denied by user.');
             return;
