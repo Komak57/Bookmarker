@@ -103,10 +103,7 @@ class ThrottledQueue {
             this.lastRequest = Date.now();
 
             log('log', `Processing addEpisode Request`);
-            const _settings = task.settings;
-            // Force the update of all API details
-            _settings['cloud'] = true;
-            this.parent.addEpisodeToStorage(api_data, task.tab, _settings);
+            this.parent.addEpisodeToStorage(api_data, task.tab, task.settings);
         }
 
         this.isProcessing = false;

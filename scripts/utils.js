@@ -190,6 +190,7 @@ async function getEpisodes() {
                                         }
                                         // Send an API Request to get additional details later...
 
+                                    settings['cloud'] = true;
                                     apiManager.request(categories[settings.c], details, { id: null, url: `https://${Domains[cloudEpisodes[id].d]}${cloudEpisodes[id].l.startsWith("/")? "":"/"}${cloudEpisodes[id].l}`, title: null }, settings);
                                 }
                             });
