@@ -17,27 +17,54 @@ const MAX_TITLE_LENGTH = 73;
 const DEBUGGING = true;
 
 function log(type, ...msg) {
-    const message = msg.join('');
+    let message = "";
+    let args = [];
+    for (const m of msg) {
+        if (typeof m === "string")
+            message = message + " " + m;
+        else
+            args.push(m);
+        // message = message + " " + JSON.stringify(m);
+    }
+    // const message = msg.join('');
     if (!DEBUGGING)
         return;
     switch (type) {
         case 'error':
-            console.error(message);
+            if (args.length > 0)
+                console.error(message, args);
+            else
+                console.error(message);
             break;
         case 'log':
-            console.log(message);
+            if (args.length > 0)
+                console.log(message, args);
+            else
+                console.log(message);
             break;
         case 'warn':
-            console.warn(message);
+            if (args.length > 0)
+                console.warn(message, args);
+            else
+                console.warn(message);
             break;
         case 'info':
-            console.info(message);
+            if (args.length > 0)
+                console.info(message, args);
+            else
+                console.info(message);
             break;
         case 'debug':
-            console.debug(message);
+            if (args.length > 0)
+                console.debug(message, args);
+            else
+                console.debug(message);
             break;
         default:
-            console.log(message);
+            if (args.length > 0)
+                console.log(message, args);
+            else
+                console.log(message);
     }
 }
 
@@ -100,15 +127,19 @@ async function getDomains() {
 }
 
 function saveDomains(Domains) {
-    // log('log','Inbound Domains is a ', typeof Domains);
-    chrome.storage.sync.set({ Domains }, () => {
-        if (chrome.runtime.lastError) {
-            log('error', `Failed to save Domains: ${chrome.runtime.lastError.name}: ${chrome.runtime.lastError.message}`);
-            throw new Error(chrome.runtime.lastError.message);
-        } else {
-            // log('log',`Domains Saved`);
-            log('log', 'Domains after Saving:', Domains);
-        }
+    return new Promise((resolve, reject) => {
+        // log('log','Inbound Domains is a ', typeof Domains);
+        chrome.storage.sync.set({ Domains }, () => {
+            if (chrome.runtime.lastError) {
+                log('error', `Failed to save Domains: ${chrome.runtime.lastError.name}: ${chrome.runtime.lastError.message}`);
+                // throw new Error(chrome.runtime.lastError.message);
+                reject(new Error(chrome.runtime.lastError.message));
+            } else {
+                // log('log',`Domains Saved`);
+                log('log', 'Domains after Saving:', Domains);
+                resolve(true);
+            }
+        });
     });
 }
 
@@ -179,48 +210,49 @@ async function getEpisodes() {
 }
 
 function saveEpisodes(localEpisodes) {
-    // log('log',`Inbound Episodes is a ${typeof localEpisodes} of size ${JSON.stringify(localEpisodes).length}b`);
-    // const _localEpisodes = Object.fromEntries(
-    //     Object.entries(localEpisodes).map(([key, value]) => [key.toString(), value])
-    // );
-
-    // Filter minimal necessary information for cloud storage
-    let cloudEpisodes = {};
-    for (let id in localEpisodes) {
-        // Not finished, and a category that supports recovery from cloud save data
-        if (localEpisodes[id].f == 0 && localEpisodes[id].c <= 1) {
-            cloudEpisodes[id] = {
-                c: localEpisodes[id].c,
-                d: localEpisodes[id].d,
-                e: localEpisodes[id].e,
-                l: localEpisodes[id].l
+    return new Promise((resolve, reject) => {
+        // Filter minimal necessary information for cloud storage
+        let cloudEpisodes = {};
+        for (let id in localEpisodes) {
+            // Not finished, and a category that supports recovery from cloud save data
+            if (localEpisodes[id].f == 0 && localEpisodes[id].c <= 1) {
+                cloudEpisodes[id] = {
+                    c: localEpisodes[id].c,
+                    d: localEpisodes[id].d,
+                    e: localEpisodes[id].e,
+                    l: localEpisodes[id].l
+                }
             }
         }
-    }
-    const size = JSON.stringify(cloudEpisodes).length;
-    if (size > chrome.storage.sync.QUOTA_BYTES_PER_ITEM) {
-        log('error', `Cloud Episodes is a ${typeof cloudEpisodes} of size ${size}b`);
-        log('log', 'String: ', JSON.stringify(cloudEpisodes));
-    }
-    chrome.storage.sync.set({ Episodes: cloudEpisodes }, () => {
-        if (chrome.runtime.lastError) {
-            log('error', `Error saving to storage.sync; ${chrome.runtime.lastError.name}: ${chrome.runtime.lastError.message}`);
-        } else {
-            // log('log','Successfully exported data to storage.sync.');
-            log('log', 'Cloud Episodes after Saving:', cloudEpisodes);
+        const size = JSON.stringify(cloudEpisodes).length;
+        if (size > chrome.storage.sync.QUOTA_BYTES_PER_ITEM) {
+            log('error', `Cloud Episodes is a ${typeof cloudEpisodes} of size ${size}b`);
+            log('log', 'String: ', JSON.stringify(cloudEpisodes));
+            reject(new Error(`Cloud Episodes is a ${typeof cloudEpisodes} of size ${size}b`));
         }
-    });
+        chrome.storage.sync.set({ Episodes: cloudEpisodes }, () => {
+            if (chrome.runtime.lastError) {
+                log('error', `Error saving to storage.sync; ${chrome.runtime.lastError.name}: ${chrome.runtime.lastError.message}`);
+                reject(new Error(`Error saving to storage.sync; ${chrome.runtime.lastError.name}: ${chrome.runtime.lastError.message}`));
+            } else {
+                // log('log','Successfully exported data to storage.sync.');
+                log('log', 'Cloud Episodes after Saving:', cloudEpisodes);
+            }
+        });
 
-    // Save complete data locally
-    // const Episodes = _localEpisodes;
-    // log('log',`Cloud Episodes is a ${typeof localEpisodes} of size ${JSON.stringify(localEpisodes).length}b`);
-    chrome.storage.local.set({ Episodes: localEpisodes }, () => {
-        if (chrome.runtime.lastError) {
-            log('error', `Error saving to storage.local; ${chrome.runtime.lastError.name}: ${chrome.runtime.lastError.message}`);
-        } else {
-            // log('log','Successfully saved data to storage.local.');
-            log('log', 'Local Episodes after Saving:', localEpisodes);
-        }
+        // Save complete data locally
+        // const Episodes = _localEpisodes;
+        // log('log',`Cloud Episodes is a ${typeof localEpisodes} of size ${JSON.stringify(localEpisodes).length}b`);
+        chrome.storage.local.set({ Episodes: localEpisodes }, () => {
+            if (chrome.runtime.lastError) {
+                log('error', `Error saving to storage.local; ${chrome.runtime.lastError.name}: ${chrome.runtime.lastError.message}`);
+                reject(new Error(`Error saving to storage.sync; ${chrome.runtime.lastError.name}: ${chrome.runtime.lastError.message}`));
+            } else {
+                // log('log','Successfully saved data to storage.local.');
+                log('log', 'Local Episodes after Saving:', localEpisodes);
+            }
+        });
+        resolve(true);
     });
 }
 

@@ -35,13 +35,15 @@ importScripts('/scripts/api/default.js');
 // API Manager
 // ====================================
 class APIManager {
-    constructor() {
+    constructor(parent) {
+        this.parent = parent;
         // Set throttling delays for different APIs here (they can run in parallel)
         this.queues = {
-            jikan: new ThrottledQueue(),
-            default: new ThrottledQueue(),
+            jikan: new ThrottledQueue(this.parent),
+            default: new ThrottledQueue(this.parent),
         };
     }
+
     async request(category, details, tab, settings) {
         let api_call = new APIClass();
         switch (category) {
@@ -69,10 +71,11 @@ class APIManager {
 // Rate Limit Logic
 // ====================================
 class ThrottledQueue {
-    constructor() {
+    constructor(parent) {
         this.lastRequest = 0;
         this.queue = [];
         this.isProcessing = false;
+        this.parent = parent;
     }
 
     enqueue(api_call, details, tab, settings) {
@@ -95,10 +98,15 @@ class ThrottledQueue {
                 await new Promise(resolve => setTimeout(resolve, waitTime));
             }
             const api_data = await task.api_call.fetch(task.details, task.tab, task.settings);
-            // Send message to background that our request completed
-            chrome.runtime.sendMessage({ action: 'addEpisode', data: api_data, tab: task.tab, settings: task.settings });
+
             // Update execution time
             this.lastRequest = Date.now();
+
+            log('log', `Processing addEpisode Request`);
+            const _settings = task.settings;
+            // Force the update of all API details
+            _settings['cloud'] = true;
+            this.parent.addEpisodeToStorage(api_data, task.tab, _settings);
         }
 
         this.isProcessing = false;

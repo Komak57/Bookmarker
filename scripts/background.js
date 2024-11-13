@@ -3,8 +3,9 @@ importScripts('/scripts/utils.js');
 importScripts('/scripts/api/apiManager.js');
 
 // Initialize APIManager as a global
-const apiManager = new APIManager();
+const apiManager = new APIManager(this);
 
+log('warn', 'Background.js Loaded');
 /* Domain Struct
     "anitaku.pe":{"i":001,"c":0,"ot":0,"otm":"","os":0,"osm":"","oe":0,"oem":"","ie":0,"n":1,"s":0}
     string d        -- Domain
@@ -65,49 +66,82 @@ chrome.runtime.onInstalled.addListener(function(details) {
 });
 
 // Handle messages from popup.js
-chrome.runtime.onMessage.addListener(async(request, sender, sendResponse) => {
-    switch (request.action) {
-        case 'trackDomain':
-            {
-                trackDomain(request.domain);
-                sendResponse({ status: "success" });
-            }
-            break;
-        case 'trackEpisode':
-            {
-                log('log', `Domain Tracking Requested: ${request.domain}`);
-
-                getDomains().then((Domains) => {
-                    //const domain = getDomainFromUrl(request.domain);
-                    if (Domains.hasOwnProperty(request.domain)) {
-                        const settings = Domains[request.domain];
-                        settings['forced'] = true;
-                        addEpisode(request.domain, settings, { id: request.id, url: request.url, title: request.title });
-                    }
-                });
-            }
-            break;
-        case 'addEpisode':
-            {
-                const _settings = request.settings;
-                // Force the update of all API details
-                _settings['cloud'] = true;
-                addEpisodeToStorage(request.api_data, request.tab, _settings);
-            }
-            break;
-        default:
-            {
-                log('log', `Unhandled Request: ${request.action}`);
-            }
-            break;
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    log('warn', 'Background.js onMessage Listener Loaded');
+    if (request.action === 'trackDomain') {
+        // sendResponse({ status: "success" });
+        trackDomain(request.domain);
+        sendResponse({ success: true });
+        return true;
     }
+    if (request.action === 'trackEpisode') {
+        // sendResponse({ status: "success" });
+        log('log', `Domain Tracking Requested: ${request.domain}`);
+
+        getDomains().then((Domains) => {
+            //const domain = getDomainFromUrl(request.domain);
+            if (Domains.hasOwnProperty(request.domain)) {
+                const settings = Domains[request.domain];
+                settings['forced'] = true;
+                addEpisode(request.domain, settings, { id: request.id, url: request.url, title: request.title });
+            }
+        });
+        sendResponse({ success: true });
+        return true;
+    }
+    // switch (request.action) {
+    //     case 'trackDomain':
+    //         {
+    //         }
+    //         return true;
+    //     case 'trackEpisode':
+    //         {
+    //         }
+    //         return true;
+    //     case 'addEpisode':
+    //         {
+    //             // })();
+    //         }
+    //         return true;
+    //     default:
+    //         {
+    //             log('log', `Unhandled Request: ${request.action}`);
+    //         }
+    // }
+    return false;
 });
+// chrome.runtime.onConnect.addListener((port) => {
+//     log('log', 'Port connected: ', port.name);
+//     port.onMessage.addListener(async(request) => {
+//         if (request.action === 'addEpisode') {
+//             // (async() => {
+//             try {
+//                 // log('log', `Processing addEpisode Request`);
+//                 // sendResponse({ status: "success" });
+//                 // const _settings = request.settings;
+//                 // Force the update of all API details
+//                 // _settings['cloud'] = true;
+//                 // await addEpisodeToStorage(request.api_data, request.tab, _settings);
+//                 // .then((r) => {
+//                 // sendResponse({ success: true });
+//                 port.postMessage({ success: true });
+//                 // });
+//             } catch (err) {
+//                 console.error("Error processing addEpisode:", err);
+//                 port.postMessage({ success: false, error: err.message });
+//             }
+//             return true;
+//         }
+//     });
+//     port.onDisconnect.addListener(() => {
+//         console.log("Port disconnected:", port.name);
+//     });
+// });
 
 // Listener for tab updates (i.e., when a user navigates to a new page)
 chrome.tabs.onUpdated.addListener(async(tabId, changeInfo, tab) => {
     // log('log',`Domain Page ${changeInfo.status}: ${tab.url}`);
     if (changeInfo.status === 'complete' && tab.url) {
-
         const domain = getDomainFromUrl(tab.url);
         log('log', `Domain Page Loaded: ${domain}`);
         // let Domains = await asyncutils.getDomains();
@@ -577,132 +611,136 @@ function getEpisodeDetails(data, context, settings) {
 }
 let isWindowCreated = false;
 // Function to add episode to storage
-function addEpisodeToStorage(api_data, tab, settings) {
+async function addEpisodeToStorage(api_data, tab, settings) {
+    // return await new Promise((resolve, reject) => {
     // If episode didn't match, and we're not allowed to skip
     if (api_data.episode == 0 && settings.ie == 0) {
         log('log', `Ignored: ${((settings.ot == 2) ? tab.title : tab.url).trim().toLowerCase()}, no episode data found.`);
         return;
     }
     // const episodes = getEpisodes();
-    getEpisodes()
-        .then((episodes) => {
+    const episodes = await getEpisodes();
+    // .then((episodes) => {
 
-            // chrome.storage.local.get('episodes', (_data) => {
-            //     const episodes = _data.episodes || {};
+    // chrome.storage.local.get('episodes', (_data) => {
+    //     const episodes = _data.episodes || {};
 
-            // Check if the title already exists in storage
-            if (episodes[api_data.id]) {
-                if (settings.cloud) {
-                    // Update the episode if we got data for cloudEpisodes
-                    // C, D, E, L shared from cloudEpisodes
-                    // F, U already processed
-                    episodes[api_data.id].t = api_data.t;
-                    episodes[api_data.id].r = api_data.r;
-                    episodes[api_data.id].n = api_data.n;
-                    episodes[api_data.id].p = api_data.p;
-                } else if (api_data.e <= episodes[api_data.id].e) {
-                    episodes[api_data.id].l = new URL(tab.url).pathname; // update URL
-                    episodes[api_data.id].r = api_data.r;
-                    episodes[api_data.id].n = api_data.n;
-                    episodes[api_data.id].p = api_data.p;
-                    log('log', `Episode already watched: ${api_data.id}.`);
-                } else if (isEpisodeSequential(api_data.e.toString(), episodes[api_data.id].e.toString()) || settings.forced) {
-                    // Update the episode if it is sequential
-                    episodes[api_data.id].d = settings.i; // we're changing URL, so we need to change the domain it links to as well
-                    episodes[api_data.id].l = new URL(tab.url).pathname; // update URL
-                    // episodes[data.title].season = data.season; // fix season in case we changed matching parameters
-                    episodes[api_data.id].e = api_data.e;
-                    episodes[api_data.id].r = api_data.r;
-                    episodes[api_data.id].n = api_data.n;
-                    episodes[api_data.id].f = api_data.f;
-                    episodes[api_data.id].p = api_data.p;
-                    episodes[api_data.id].u = Date.now();
-                    log('log', `Updated: ${api_data.id} - Episode ${api_data.e}`);
-                } else {
-                    // Notify because the episode is tracked, but watched out of order
-                    log('log', `Episode watched out of order for: ${api_data.id}. No updates made.`);
-                    if (settings.n) {
-                        //
-                        // Generate a notification window to warn the user that they may have skipped an episode
-                        //
-                        const episodeUrl = encodeURIComponent(episodes[api_data.id].l); // encode the original URL
-                        const episodeTitle = encodeURIComponent(episodes[api_data.id].t); // encode the original URL
-                        const popupWidth = 400;
-                        const popupHeight = 300;
-                        // Patched to ignore when we're receiving data from cloudEpisodes
-                        if (!isWindowCreated) {
-                            isWindowCreated = true;
-                            chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-                                const activeTabId = tabs[0].id; // Get the ID of the active tab
+    // Check if the title already exists in storage
+    if (episodes[api_data.id]) {
+        if (settings.cloud) {
+            // Update the episode if we got data for cloudEpisodes
+            // C, D, E, L shared from cloudEpisodes
+            // F, U already processed
+            episodes[api_data.id].t = api_data.t;
+            episodes[api_data.id].r = api_data.r;
+            episodes[api_data.id].n = api_data.n;
+            episodes[api_data.id].p = api_data.p;
+        } else if (api_data.e <= episodes[api_data.id].e) {
+            episodes[api_data.id].l = new URL(tab.url).pathname; // update URL
+            episodes[api_data.id].r = api_data.r;
+            episodes[api_data.id].n = api_data.n;
+            episodes[api_data.id].p = api_data.p;
+            log('log', `Episode already watched: ${api_data.id}.`);
+        } else if (isEpisodeSequential(api_data.e.toString(), episodes[api_data.id].e.toString()) || settings.forced) {
+            // Update the episode if it is sequential
+            episodes[api_data.id].d = settings.i; // we're changing URL, so we need to change the domain it links to as well
+            episodes[api_data.id].l = new URL(tab.url).pathname; // update URL
+            // episodes[data.title].season = data.season; // fix season in case we changed matching parameters
+            episodes[api_data.id].e = api_data.e;
+            episodes[api_data.id].r = api_data.r;
+            episodes[api_data.id].n = api_data.n;
+            episodes[api_data.id].f = api_data.f;
+            episodes[api_data.id].p = api_data.p;
+            episodes[api_data.id].u = Date.now();
+            log('log', `Updated: ${api_data.id} - Episode ${api_data.e}`);
+        } else {
+            // Notify because the episode is tracked, but watched out of order
+            log('log', `Episode watched out of order for: ${api_data.id}. No updates made.`);
+            if (settings.n) {
+                //
+                // Generate a notification window to warn the user that they may have skipped an episode
+                //
+                const episodeUrl = encodeURIComponent(episodes[api_data.id].l); // encode the original URL
+                const episodeTitle = encodeURIComponent(episodes[api_data.id].t); // encode the original URL
+                const popupWidth = 400;
+                const popupHeight = 300;
+                // Patched to ignore when we're receiving data from cloudEpisodes
+                if (!isWindowCreated) {
+                    isWindowCreated = true;
+                    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                        const activeTabId = tabs[0].id; // Get the ID of the active tab
 
-                                // Get the current window's dimensions
-                                chrome.windows.getCurrent({ populate: false }, (currentWindow) => {
-                                    const windowWidth = currentWindow.width;
-                                    const windowHeight = currentWindow.height;
-                                    const windowLeft = currentWindow.left;
-                                    const windowTop = currentWindow.top;
+                        // Get the current window's dimensions
+                        chrome.windows.getCurrent({ populate: false }, (currentWindow) => {
+                            const windowWidth = currentWindow.width;
+                            const windowHeight = currentWindow.height;
+                            const windowLeft = currentWindow.left;
+                            const windowTop = currentWindow.top;
 
-                                    // Calculate the position for centering the popup
-                                    const leftPosition = windowLeft + Math.round((windowWidth - popupWidth) / 2);
-                                    const topPosition = windowTop + Math.round((windowHeight - popupHeight) / 2);
+                            // Calculate the position for centering the popup
+                            const leftPosition = windowLeft + Math.round((windowWidth - popupWidth) / 2);
+                            const topPosition = windowTop + Math.round((windowHeight - popupHeight) / 2);
 
-                                    // Create the popup window at the calculated position
-                                    chrome.windows.create({
-                                        // embed the episode at a _GET variable
-                                        url: chrome.runtime.getURL(`notification.html?title=${episodeTitle}&url=${episodeUrl}&tabId=${activeTabId}`), // Your custom notification page
-                                        type: "popup",
-                                        width: popupWidth,
-                                        height: popupHeight,
-                                        left: leftPosition,
-                                        top: topPosition
-                                    }, function(window) {
-                                        // Listen for on-close
-                                        chrome.windows.onRemoved.addListener(function(windowId) {
-                                            if (windowId === window.id) {
-                                                isWindowCreated = false; // Reset the flag when the window is closed
-                                            }
-                                        });
-                                    });
+                            // Create the popup window at the calculated position
+                            chrome.windows.create({
+                                // embed the episode at a _GET variable
+                                url: chrome.runtime.getURL(`notification.html?title=${episodeTitle}&url=${episodeUrl}&tabId=${activeTabId}`), // Your custom notification page
+                                type: "popup",
+                                width: popupWidth,
+                                height: popupHeight,
+                                left: leftPosition,
+                                top: topPosition
+                            }, function(window) {
+                                // Listen for on-close
+                                chrome.windows.onRemoved.addListener(function(windowId) {
+                                    if (windowId === window.id) {
+                                        isWindowCreated = false; // Reset the flag when the window is closed
+                                    }
                                 });
                             });
-                        }
-                    }
-                }
-            } else {
-                // Add the episode if it is Episode 1, or we're ignoring episode match, or we're forcably adding the episode
-                if (parseInt(api_data.e) === 1 || settings.ie || settings.forced) {
-                    //const domainID = Domains[domain].i;
-                    episodes[api_data.id] = {
-                        c: settings.c, // Match Domain Filter
-                        d: settings.i,
-                        f: api_data.f,
-                        t: api_data.t,
-                        e: api_data.e,
-                        r: api_data.r,
-                        n: api_data.n,
-                        p: api_data.p,
-                        l: new URL(tab.url).pathname, // URL Last Viewed
-                        u: Date.now() // Track the time it was viewed
-                    };
-                    log('log', `Tracked: ${api_data.t} - Episode ${api_data.e} of ${api_data.n}`);
-                } else {
-                    // TODO: Handle force-track-episode
-                    log('log', `Only Episode 1 can be added for new titles. Episode ${api_data.e} not tracked.`);
+                        });
+                    });
                 }
             }
+        }
+    } else {
+        // Add the episode if it is Episode 1, or we're ignoring episode match, or we're forcably adding the episode
+        if (parseInt(api_data.e) === 1 || settings.ie || settings.forced) {
+            //const domainID = Domains[domain].i;
+            episodes[api_data.id] = {
+                c: settings.c, // Match Domain Filter
+                d: settings.i,
+                f: api_data.f,
+                t: api_data.t,
+                e: api_data.e,
+                r: api_data.r,
+                n: api_data.n,
+                p: api_data.p,
+                l: new URL(tab.url).pathname, // URL Last Viewed
+                u: Date.now() // Track the time it was viewed
+            };
+            log('log', `Tracked: ${api_data.t} - Episode ${api_data.e} of ${api_data.n}`);
+        } else {
+            // TODO: Handle force-track-episode
+            log('log', `Only Episode 1 can be added for new titles. Episode ${api_data.e} not tracked.`);
+        }
+    }
 
-            // Save the updated episodes list back to storage
-            // chrome.storage.local.set({ episodes });
-            // log('log','Episodes saved:', episodes);
-            saveEpisodes(episodes);
+    // Save the updated episodes list back to storage
+    // chrome.storage.local.set({ episodes });
+    // log('log','Episodes saved:', episodes);
+    const r = await saveEpisodes(episodes);
+    // .then((r) => {
+    chrome.runtime.sendMessage({ action: "reload" }, (response) => {
+        if (chrome.runtime.lastError)
+        ; // Ignore Error when user stops focusing
 
-            chrome.runtime.sendMessage({ action: "reload" }, (response) => {
-                if (chrome.runtime.lastError)
-                ; // Ignore Error when user stops focusing
+    });
+    // });
 
-            });
-            // });
-        });
+    // });
+    // });
+    // });
 }
 
 // Create an ID 1 incremented from the highest ID in Domains
