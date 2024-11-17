@@ -111,11 +111,11 @@ class JIKAN_Anime extends APIClass {
             log('error', `JIKAN Data[0] not Found searching ${tab.url}`);
             return 'JIKAN returned nothing.';
         }
-        let lowest = this.getMatchScore(details.title, retA.json.data[0].title);
+        let lowest = levenshtein(details.title.toLowerCase(), retA.json.data[0].title.toLowerCase());
         let m = 0;
         // Cycle all 10 results for a best match
         for (let i = 0; i < retA.json.data.length; i++) {
-            const score = this.getMatchScore(details.title, retA.json.data[i].title);
+            const score = levenshtein(details.title.toLowerCase(), retA.json.data[i].title.toLowerCase());
             if (score < lowest) {
                 lowest = score;
                 m = i;
@@ -167,10 +167,6 @@ class JIKAN_Anime extends APIClass {
         //     return `JIKAN Error: ${er.message}`;
         // });
         return 'Exiting fetch';
-    }
-
-    getMatchScore(needle, haystack) {
-        return levenshtein(needle.toLowerCase(), haystack.toLowerCase());
     }
 
     async fetchData(details) {
