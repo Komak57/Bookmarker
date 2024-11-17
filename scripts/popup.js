@@ -70,9 +70,11 @@ async function displayEpisodes(domain, url) {
                     episodesArray.sort(([, a], [, b]) => {
                         switch (settings.s) {
                             case 1:
-                                return a.t - b.t;
+                                return a.t.localeCompare(b.t);
+                                // return a.t - b.t;
                             case 2:
-                                return b.t - a.t;
+                                return b.t.localeCompare(a.t);
+                                // return b.t - a.t;
                             case 0:
                             default:
                                 const episodeA = new Date(a.u);
