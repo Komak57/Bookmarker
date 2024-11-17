@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Domain Settings</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: rgb(27, 27, 35);
+            color: rgb(240, 240, 242);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        h1 {
+            color: rgb(121, 161, 255);
+        }
+        /* Domain Container Styling */
+        
+        .domain-header {
+            cursor: pointer;
+            background-color: rgb(35, 35, 45);
+            margin-bottom: 5px;
+            padding: 15px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+        
+        .domain-title {
+            color: rgb(121, 161, 255);
+            font-size: 1.1em;
+        }
+        
+        .domain-settings {
+            display: none;
+            padding: 15px;
+            border: 1px solid rgb(45, 45, 55);
+            background-color: rgb(40, 40, 50);
+            border-radius: 5px;
+            margin-bottom: 10px;
+            color: rgb(200, 200, 220);
+        }
+        /* Form Styling */
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+        
+        select,
+        input[type="checkbox"],
+        textarea {
+            margin-bottom: 10px;
+            padding: 5px;
+            font-size: 0.9em;
+        }
+        
+        select {
+            width: fit-content;
+        }
+        
+        .settings-group {
+            display: flex;
+            flex-direction: row;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .settings-pair {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 10px;
+            width: 33%
+        }
+        
+        button {
+            margin-top: 8px;
+            padding: 6px 12px;
+            font-size: 0.9em;
+            color: #fff;
+            background-color: rgb(70, 130, 180);
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        button:hover {
+            background-color: rgb(60, 120, 160);
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Manage Episodes</h1>
+    <div id="episodeList"></div>
+
+    <script src="scripts/utils.js"></script>
+    <script src="scripts/episode_settings.js"></script>
+</body>
+
+</html>

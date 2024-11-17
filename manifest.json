@@ -2,11 +2,12 @@
     "manifest_version": 3,
     "name": "Bookmarker",
     "description": "Auto-tracking of manga and anime",
-    "version": "1.4.5",
+    "version": "1.4.6",
     "permissions": [
         "tabs",
         "storage",
-        "scripting"
+        "scripting",
+        "contextMenus"
     ],
     "optional_host_permissions": [
         "<all_urls>"
@@ -24,8 +25,17 @@
         "default_icon": "icons/bookmarker.png"
     },
     "web_accessible_resources": [{
-        "resources": ["notification.js"],
-        "matches": ["<all_urls>"]
-    }],
+            "resources": ["notification.js"],
+            "matches": ["<all_urls>"]
+        },
+        {
+            "resources": ["episode_settings.html"],
+            "matches": ["<all_urls>"]
+        },
+        {
+            "resources": ["domain_settings.html"],
+            "matches": ["<all_urls>"]
+        }
+    ],
     "options_page": "options.html"
 }

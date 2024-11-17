@@ -61,7 +61,34 @@ chrome.runtime.onInstalled.addListener(function(details) {
         //         log('log',"All data cleared from chrome.storage.sync.");
         //     }
         // });
+        chrome.contextMenus.create({
+            id: "editDomains",
+            title: "Domain Settings", // Your desired name
+            contexts: ["action"]
+        });
+        chrome.contextMenus.create({
+            id: "editEpisodes",
+            title: "Episode Settings", // Your desired name
+            contexts: ["action"]
+        });
         VersionUpdate();
+    }
+});
+
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+    switch (info.menuItemId) {
+        case "editDomains":
+            chrome.tabs.create({ url: chrome.runtime.getURL("domain_settings.html") });
+            break;
+        case "editEpisodes":
+            chrome.tabs.create({ url: chrome.runtime.getURL("episode_settings.html") });
+            break;
+    }
+});
+
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+    if (info.menuItemId === "customOptions") {
+        chrome.runtime.openOptionsPage(); // Opens the options page
     }
 });
 
