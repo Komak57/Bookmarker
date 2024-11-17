@@ -9,49 +9,49 @@ class JIKAN_Manga extends APIClass {
     // ====================================
     // JIKAN API - Get Manga Data
     // ====================================
-    fetch(details, tab, settings) {
+    async fetch(details, tab, settings) {
         // Get title from API - https://api.jikan.moe/v4/manga?q=
-        this.fetchData(details)
-            .then(ret => {
-                if (!ret.json.data[0]) {
-                    log('error', `JIKAN Data[0] not Found searching ${tab.url}`);
-                    return;
-                }
-                const jikan = new DataStruct(
-                    retA.json.data[0].mal_id, // id
-                    settings.c, // c
-                    settings.i, // d
-                    0, // f
-                    details.title, // t
-                    details.episode, // e
-                    retEp.json.data.length, // r
-                    retA.json.data[0].chapters, // n
-                    retA.json.data[0].images.jpg.small_image_url, // p
-                    "tab.url", // l
-                    Date.now() // u
-                );
-                // Try to get Title from Jikan.
-                // NOTE: It can be in an array called "Titles", or as a collection of objects called "title(_language?)"
-                const titles = ret.json.data[0].titles;
-                if (titles) {
-                    // Check array of titles for english title
-                    let title = titles[0].title;
-                    jikan.t = title; // Default to first-found (usually Default)
-                    titles.forEach(t => {
-                        if (t.type == "English") // Found english
-                            jikan.t = t.title;
-                        // title = t.title;
-                    });
-                    log('log', `JIKAN Success: ${jikan.id} / ${jikan.t}`);
-                } else {
-                    if (ret.json.data[0].title) // default
-                        jikan.t = ret.json.data[0].title;
-                    if (ret.json.data[0].title_english) // english
-                        jikan.t = ret.json.data[0].title_english;
-                }
-                return jikan;
-            })
-            .catch(error => log('error', `JIKAN Error: ${error}`));
+        const retA = await this.fetchData(details);
+        // .then(ret => {
+        if (!retA.json.data[0]) {
+            log('error', `JIKAN Data[0] not Found searching ${tab.url}`);
+            return;
+        }
+        const jikan = new DataStruct(
+            retA.json.data[0].mal_id, // id
+            settings.c, // c
+            settings.i, // d
+            0, // f
+            details.title, // t
+            details.episode, // e
+            retA.json.data[0].chapters, // r
+            retA.json.data[0].chapters, // n
+            retA.json.data[0].images.jpg.small_image_url, // p
+            "tab.url", // l
+            Date.now() // u
+        );
+        // Try to get Title from Jikan.
+        // NOTE: It can be in an array called "Titles", or as a collection of objects called "title(_language?)"
+        const titles = retA.json.data[0].titles;
+        if (titles) {
+            // Check array of titles for english title
+            let title = titles[0].title;
+            jikan.t = title; // Default to first-found (usually Default)
+            titles.forEach(t => {
+                if (t.type == "English") // Found english
+                    jikan.t = t.title;
+                // title = t.title;
+            });
+            log('log', `JIKAN Success: ${jikan.id} / ${jikan.t}`);
+        } else {
+            if (retA.json.data[0].title) // default
+                jikan.t = retA.json.data[0].title;
+            if (retA.json.data[0].title_english) // english
+                jikan.t = retA.json.data[0].title_english;
+        }
+        return jikan;
+        // })
+        // .catch(error => log('error', `JIKAN Error: ${error}`));
     }
     async fetchData(details) {
         const url = `https://api.jikan.moe/v4/manga?q=${encodeURIComponent(details.title)}&limit=1`;

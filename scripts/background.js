@@ -475,16 +475,16 @@ function getDetails(domain, documentContent, tab, settings) {
     }
     switch (parseInt(settings.os)) {
         case 0:
-            log('log', `Searching Season using: '${new URL(tab.url).pathname}'`);
+            // log('log', `Searching Season using: '${new URL(tab.url).pathname}'`);
             getSeasonDetails(data, new URL(tab.url).pathname, settings);
             break;
         case 1:
-            log('log', `Searching Season from Title`);
+            // log('log', `Searching Season from Title`);
             getSeasonDetails(data, tab.title.trim(), settings);
             break;
         case 2:
             if (documentContent && documentContent.hasOwnProperty('season')) {
-                log('log', `Searching Season from Selector`);
+                // log('log', `Searching Season from Selector`);
                 getSeasonDetails(data, documentContent.season.trim(), settings);
             } else {
                 log('warn', `Could not find season data.`);
@@ -635,6 +635,7 @@ async function addEpisodeToStorage(api_data, tab, settings) {
             episodes[api_data.id].r = api_data.r;
             episodes[api_data.id].n = api_data.n;
             episodes[api_data.id].p = api_data.p;
+            log('log', `Cloud Episode updated: ${api_data.id}.`);
         } else if (api_data.e <= episodes[api_data.id].e) {
             episodes[api_data.id].l = new URL(tab.url).pathname; // update URL
             episodes[api_data.id].r = api_data.r;
