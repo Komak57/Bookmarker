@@ -18,11 +18,11 @@ class JIKAN_Manga extends APIClass {
             return;
         }
 
-        let lowest = levenshtein(details.title.toLowerCase(), retA.json.data[0].title.toLowerCase());
+        let lowest = this.levenshtein(details.title.toLowerCase(), retA.json.data[0].title.toLowerCase());
         let m = 0;
         // Cycle all 10 results for a best match
         for (let i = 0; i < retA.json.data.length; i++) {
-            const score = levenshtein(details.title.toLowerCase(), retA.json.data[i].title.toLowerCase());
+            const score = this.levenshtein(details.title.toLowerCase(), retA.json.data[i].title.toLowerCase());
             if (score < lowest) {
                 lowest = score;
                 m = i;
