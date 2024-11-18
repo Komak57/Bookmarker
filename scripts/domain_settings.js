@@ -439,14 +439,36 @@ function renderDomainSettings(trackedDomains, domain, episodes, alreadyhasPermis
 
     const _moveToButton = document.createElement('button');
     _moveToButton.textContent = 'Move All';
-    _moveToButton.addEventListener('click', (event) => {
-        event.stopPropagation();
-        event.preventDefault();
 
-        moveEpisodes(trackedDomains, domain, _moveToSelect.value);
-        window.location.reload();
-    });
+    if (Object.keys(domainEpisodes).length > 0) {
+        _moveToButton.addEventListener('click', (event) => {
+            event.stopPropagation();
+            event.preventDefault();
+
+            moveEpisodes(trackedDomains, domain, _moveToSelect.value);
+            window.location.reload();
+        });
+    } else {
+        _moveToButton.disabled = true;
+    }
     _settings.appendChild(_moveToButton);
+
+    const _deleteEpButton = document.createElement('button');
+    _deleteEpButton.style = 'float: right;';
+    _deleteEpButton.textContent = 'Delete All Episodes';
+
+    if (Object.keys(domainEpisodes).length > 0) {
+        _deleteEpButton.addEventListener('click', (event) => {
+            event.stopPropagation();
+            event.preventDefault();
+
+            deleteEpisodes(settings, episodes);
+            window.location.reload();
+        });
+    } else {
+        _deleteEpButton.disabled = true;
+    }
+    _settings.appendChild(_deleteEpButton);
 
     _header.addEventListener('click', (event) => {
         _settings.style.display = _settings.style.display === 'block' ? 'none' : 'block';
@@ -478,6 +500,12 @@ function updateDomainSetting(trackedDomains, domain, settingKey, newValue) {
             // window.location.reload();
     }
     //
+}
+
+function deleteEpisodes(settings, episodes) {
+    const excludedEpisodes = Object.fromEntries(Object.entries(episodes).filter(([id, ep]) => ep.d != settings.i));
+    log('log', `Deleting ${Object.keys(episodes).length - Object.keys(excludedEpisodes).length} episodes.`);
+    saveEpisodes(excludedEpisodes);
 }
 
 // Function to move episodes to another domain
