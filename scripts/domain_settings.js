@@ -123,8 +123,16 @@ function renderDomainSettings(trackedDomains, domain, episodes, alreadyhasPermis
     queryTitleMatchTextarea.value = settings.otm; // Load existing query or leave blank
     queryTitleMatchTextarea.addEventListener('input', () => updateDomainSetting(trackedDomains, domain, 'otm', queryTitleMatchTextarea.value));
     if (settings.ot == 2) {
-        queryTitleMatchLabel.style.display = 'block';
-        queryTitleMatchTextarea.style.display = 'block';
+        // Needs Permissions
+        if (alreadyhasPermission) {
+            // Has Permissions
+            queryTitleMatchLabel.style.display = 'block';
+            queryTitleMatchTextarea.style.display = 'block';
+        } else {
+            queryTitleMatchLabel.textContent = 'You need site permissions for this option.';
+            queryTitleMatchLabel.style.display = 'block';
+            queryTitleMatchTextarea.style.display = 'none';
+        }
     } else {
         queryTitleMatchLabel.style.display = 'none';
         queryTitleMatchTextarea.style.display = 'none';
@@ -153,6 +161,7 @@ function renderDomainSettings(trackedDomains, domain, episodes, alreadyhasPermis
                         // The callback argument will be true if the user granted the permissions.
                         if (granted) {
                             log('log', `New Permissions granted for ${domain}`);
+                            queryTitleMatchLabel.textContent = 'Query Title (CSS Selector or Regex):';
                             queryTitleMatchLabel.style.display = 'block';
                             queryTitleMatchTextarea.style.display = 'block';
                             updateDomainSetting(trackedDomains, domain, 'ot', parseInt(_obtainTitleFromSelect.value))
@@ -209,8 +218,16 @@ function renderDomainSettings(trackedDomains, domain, episodes, alreadyhasPermis
     querySeasonMatchTextarea.value = settings.osm; // Load existing query or leave blank
     querySeasonMatchTextarea.addEventListener('input', () => updateDomainSetting(trackedDomains, domain, 'osm', querySeasonMatchTextarea.value));
     if (settings.os == 2) {
-        querySeasonMatchLabel.style.display = 'block';
-        querySeasonMatchTextarea.style.display = 'block';
+        // Needs Permissions
+        if (alreadyhasPermission) {
+            // Has Permissions
+            querySeasonMatchLabel.style.display = 'block';
+            querySeasonMatchTextarea.style.display = 'block';
+        } else {
+            querySeasonMatchLabel.textContent = 'You need site permissions for this option.';
+            querySeasonMatchLabel.style.display = 'block';
+            querySeasonMatchTextarea.style.display = 'none';
+        }
     } else {
         querySeasonMatchLabel.style.display = 'none';
         querySeasonMatchTextarea.style.display = 'none';
@@ -239,6 +256,7 @@ function renderDomainSettings(trackedDomains, domain, episodes, alreadyhasPermis
                         // The callback argument will be true if the user granted the permissions.
                         if (granted) {
                             log('log', `New Permissions granted for ${domain}`);
+                            querySeasonMatchLabel.textContent = 'Query Season (CSS Selector or Regex):';
                             querySeasonMatchLabel.style.display = 'block';
                             querySeasonMatchTextarea.style.display = 'block';
                             updateDomainSetting(trackedDomains, domain, 'os', parseInt(_obtainSeasonFromSelect.value))
@@ -295,8 +313,16 @@ function renderDomainSettings(trackedDomains, domain, episodes, alreadyhasPermis
     queryEpisodeMatchTextarea.value = settings.oem; // Load existing query or leave blank
     queryEpisodeMatchTextarea.addEventListener('input', () => updateDomainSetting(trackedDomains, domain, 'oem', queryEpisodeMatchTextarea.value));
     if (settings.oe == 2) {
-        queryEpisodeMatchLabel.style.display = 'block';
-        queryEpisodeMatchTextarea.style.display = 'block';
+        // Needs Permissions
+        if (alreadyhasPermission) {
+            // Has Permissions
+            queryEpisodeMatchLabel.style.display = 'block';
+            queryEpisodeMatchTextarea.style.display = 'block';
+        } else {
+            queryEpisodeMatchLabel.textContent = 'You need site permissions for this option.';
+            queryEpisodeMatchLabel.style.display = 'block';
+            queryEpisodeMatchTextarea.style.display = 'none';
+        }
     } else {
         queryEpisodeMatchLabel.style.display = 'none';
         queryEpisodeMatchTextarea.style.display = 'none';
@@ -325,6 +351,7 @@ function renderDomainSettings(trackedDomains, domain, episodes, alreadyhasPermis
                         // The callback argument will be true if the user granted the permissions.
                         if (granted) {
                             log('log', `New Permissions granted for ${domain}`);
+                            queryEpisodeMatchLabel.textContent = 'Query Episode (CSS Selector or Regex):';
                             queryEpisodeMatchLabel.style.display = 'block';
                             queryEpisodeMatchTextarea.style.display = 'block';
                             updateDomainSetting(trackedDomains, domain, 'oe', parseInt(_obtainEpisodeFromSelect.value))
