@@ -175,10 +175,31 @@ chrome.tabs.onUpdated.addListener(async(tabId, changeInfo, tab) => {
         getDomains().then((Domains) => {
             // Check if this domain is tracked
             if (Domains.hasOwnProperty(domain)) {
-                // And we still have permissions
+                // Check Permissions
                 hasPermission(URL_PATTERN.replace('$d', domain)).then((result) => {
+                    // We still have permissions
                     const settings = Domains[domain];
                     addEpisode(domain, settings, tab);
+                }).catch((error) => {
+                    // We don't have permissions
+                    if (settings.ot == 2 || settings.os == 2 || settings.oe == 2) {
+                        // Request necessary permissions
+                        chrome.permissions.request({
+                            origins: [URL_PATTERN.replace('$d', domain)]
+                        }, (granted) => {
+                            // The callback argument will be true if the user granted the permissions.
+                            if (granted) {
+                                const settings = Domains[domain];
+                                addEpisode(domain, settings, tab);
+                            } else {
+                                log('log', `Domain Permissions Refused for ${domain}`);
+                            }
+                        });
+                    } else {
+                        // Don't actually need the permissions for this domain
+                        const settings = Domains[domain];
+                        addEpisode(domain, settings, tab);
+                    }
                 });
             }
         });
@@ -664,6 +685,7 @@ async function addEpisodeToStorage(api_data, tab, settings) {
             episodes[api_data.id].p = api_data.p;
             log('log', `Cloud Episode updated: ${api_data.id}.`);
         } else if (api_data.e <= episodes[api_data.id].e) {
+            episodes[api_data.id].d = settings.i; // we're changing URL, so we need to change the domain it links to as well
             episodes[api_data.id].l = new URL(tab.url).pathname; // update URL
             episodes[api_data.id].r = api_data.r;
             episodes[api_data.id].n = api_data.n;

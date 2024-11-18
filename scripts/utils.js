@@ -72,13 +72,24 @@ function delayExecution(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function hasPermission(urlPattern) {
-    return new Promise((resolve) => {
-        chrome.permissions.contains({ origins: [urlPattern] },
-            (result) => {
-                resolve(result);
-            }
-        );
+async function hasPermission(urlPattern) {
+    return new Promise((resolve, reject) => {
+        try {
+            chrome.permissions.contains({ origins: [urlPattern] },
+                (granted) => {
+                    if (chrome.runtime.lastError)
+                        reject(chrome.runtime.lastError);
+                    if (granted)
+                        resolve(granted);
+                    else
+                        resolve(false);
+                    // reject(new Error(`Permission denied for ${urlPattern}`));
+                }
+            );
+        } catch (err) {
+            reject(err);
+        }
+        // reject(new Error(`hasPermissions can't be executed here.`));
     });
 }
 async function getVersion() {

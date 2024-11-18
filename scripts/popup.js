@@ -88,112 +88,116 @@ async function displayEpisodes(domain, url) {
                         // for (let id in episodesArray) {
                         //     const episode = episodes[id];
                         episodesArray.forEach(([id, episode]) => {
-                            // log('log','Rendering: ', episode.t);
-                            const episodeListItem = document.createElement("li");
-                            episodeListItem.classList.add("episode-item");
+                            try {
+                                // log('log','Rendering: ', episode.t);
+                                const episodeListItem = document.createElement("li");
+                                episodeListItem.classList.add("episode-item");
 
-                            const episodeCard = document.createElement("a");
-                            episodeCard.classList.add("episode-card");
-                            // episodeCard.onclick = () => { chrome.tabs.create({ url: `${domain}/${episode.l}` }); };
-                            const [targetDomain, targetSettings] = Object.entries(Domains).find(([d, s]) => s.i === episode.d);
-                            episodeCard.href = `https://${targetDomain}${episode.l.startsWith("/")? "":"/"}${episode.l}`;
-                            // Load bookmark in current tab if we're on the same domain, else, load in a new tab
-                            // if (episode.d != settings.i)
-                            episodeCard.target = '_blank'; // Open link in a new tab
+                                const episodeCard = document.createElement("a");
+                                episodeCard.classList.add("episode-card");
+                                // episodeCard.onclick = () => { chrome.tabs.create({ url: `${domain}/${episode.l}` }); };
+                                const [targetDomain, targetSettings] = Object.entries(Domains).find(([d, s]) => s.i === episode.d);
+                                episodeCard.href = `https://${targetDomain}${episode.l.startsWith("/")? "":"/"}${episode.l}`;
+                                // Load bookmark in current tab if we're on the same domain, else, load in a new tab
+                                // if (episode.d != settings.i)
+                                episodeCard.target = '_blank'; // Open link in a new tab
 
-                            const episodeThumbnail = document.createElement("img");
-                            episodeThumbnail.classList.add("episode-thumb");
-                            episodeThumbnail.src = episode.p;
+                                const episodeThumbnail = document.createElement("img");
+                                episodeThumbnail.classList.add("episode-thumb");
+                                episodeThumbnail.src = episode.p;
 
-                            const episodeInfo = document.createElement("div");
-                            episodeInfo.classList.add("episode-info");
+                                const episodeInfo = document.createElement("div");
+                                episodeInfo.classList.add("episode-info");
 
-                            const title = document.createElement("div");
-                            title.classList.add("episode-title");
-                            title.textContent = episode.t;
+                                const title = document.createElement("div");
+                                title.classList.add("episode-title");
+                                title.textContent = episode.t;
 
-                            // Create the tooltip element to show full title on hover
-                            const tooltip = document.createElement("div");
-                            tooltip.classList.add("tooltip");
-                            tooltip.textContent = episode.t; // Full title here
+                                // Create the tooltip element to show full title on hover
+                                const tooltip = document.createElement("div");
+                                tooltip.classList.add("tooltip");
+                                tooltip.textContent = episode.t; // Full title here
 
-                            const details = document.createElement("div");
-                            details.classList.add("episode-details");
-                            const det_span1 = document.createElement("span");
-                            if (episode.c == 0)
-                                if (episode.n == null)
-                                    det_span1.textContent = `Episode ${episode.e} of ${episode.r} (??)`;
+                                const details = document.createElement("div");
+                                details.classList.add("episode-details");
+                                const det_span1 = document.createElement("span");
+                                if (episode.c == 0)
+                                    if (episode.n == null)
+                                        det_span1.textContent = `Episode ${episode.e} of ${episode.r} (??)`;
+                                    else
+                                        det_span1.textContent = `Episode ${episode.e} of ${episode.r} (${episode.n})`;
+                                else if (episode.c == 1)
+                                    det_span1.textContent = `Chapter ${episode.e}`;
                                 else
-                                    det_span1.textContent = `Episode ${episode.e} of ${episode.r} (${episode.n})`;
-                            else if (episode.c == 1)
-                                det_span1.textContent = `Chapter ${episode.e}`;
-                            else
-                                det_span1.textContent = `Episode ${episode.e}`;
-                            const det_span2 = document.createElement("span");
-                            det_span2.textContent = `Updated ${new Date(episode.u).toLocaleString()}`;
-                            details.appendChild(det_span1);
-                            details.appendChild(det_span2);
+                                    det_span1.textContent = `Episode ${episode.e}`;
+                                const det_span2 = document.createElement("span");
+                                det_span2.textContent = `Updated ${new Date(episode.u).toLocaleString()}`;
+                                details.appendChild(det_span1);
+                                details.appendChild(det_span2);
 
-                            const trashIcon = document.createElement('i');
-                            trashIcon.className = 'fas fa-trash trash-icon';
+                                const trashIcon = document.createElement('i');
+                                trashIcon.className = 'fas fa-trash trash-icon';
 
-                            trashIcon.addEventListener('click', (event) => {
-                                event.stopPropagation();
-                                event.preventDefault();
+                                trashIcon.addEventListener('click', (event) => {
+                                    event.stopPropagation();
+                                    event.preventDefault();
 
-                                delete episodes[id];
-                                saveEpisodes(episodes);
-                                displayEpisodes(domain); // Re-render the list after deletion
-                                // // Remove episode from storage
-                                // chrome.storage.local.get('episodes', (data) => {
-                                //     const episodes = data.episodes || {};
-                                //     delete episodes[episode.t];
-                                //     chrome.storage.local.set({ episodes }, () => {
-                                //         displayEpisodes(domain); // Re-render the list after deletion
-                                //     });
+                                    delete episodes[id];
+                                    saveEpisodes(episodes);
+                                    displayEpisodes(domain); // Re-render the list after deletion
+                                    // // Remove episode from storage
+                                    // chrome.storage.local.get('episodes', (data) => {
+                                    //     const episodes = data.episodes || {};
+                                    //     delete episodes[episode.t];
+                                    //     chrome.storage.local.set({ episodes }, () => {
+                                    //         displayEpisodes(domain); // Re-render the list after deletion
+                                    //     });
+                                    // });
+                                });
+
+                                // Add a complete icon (✓)
+                                const completeIcon = document.createElement('i');
+                                completeIcon.className = 'fas fa-solid fa-check';
+                                if (episode.f)
+                                    completeIcon.className = 'fas fa-solid fa-star';
+
+                                completeIcon.addEventListener('click', (event) => {
+                                    event.stopPropagation();
+                                    event.preventDefault();
+
+                                    toggleComplete(episodes, id);
+                                    saveEpisodes(episodes);
+                                    displayEpisodes(domain); // Re-render the list after deletion
+                                    // chrome.storage.local.set({ episodes }, () => {
+                                    //     displayEpisodes(domain); // Re-render the list after deletion
+                                    // });
+                                });
+
+                                // Append the title and details to the info div
+                                episodeInfo.appendChild(title);
+                                if (episode.t && episode.t.length > MAX_TITLE_LENGTH)
+                                    episodeCard.appendChild(tooltip); // Tooltip attached to card
+
+                                episodeInfo.appendChild(details);
+
+                                // Append episode info and delete icon to the card
+                                // Only add the image in the event we HAVE a thumbnail
+                                if (episode.p !== "")
+                                    episodeCard.appendChild(episodeThumbnail);
+                                episodeCard.appendChild(episodeInfo);
+                                episodeCard.appendChild(completeIcon);
+                                episodeCard.appendChild(trashIcon);
+
+                                episodeListItem.appendChild(episodeCard);
+                                // Append the card to the list container
+                                if (episode.f)
+                                    episodesCompleted.appendChild(episodeListItem);
+                                else
+                                    episodesList.appendChild(episodeListItem);
                                 // });
-                            });
-
-                            // Add a complete icon (✓)
-                            const completeIcon = document.createElement('i');
-                            completeIcon.className = 'fas fa-solid fa-check';
-                            if (episode.f)
-                                completeIcon.className = 'fas fa-solid fa-star';
-
-                            completeIcon.addEventListener('click', (event) => {
-                                event.stopPropagation();
-                                event.preventDefault();
-
-                                toggleComplete(episodes, id);
-                                saveEpisodes(episodes);
-                                displayEpisodes(domain); // Re-render the list after deletion
-                                // chrome.storage.local.set({ episodes }, () => {
-                                //     displayEpisodes(domain); // Re-render the list after deletion
-                                // });
-                            });
-
-                            // Append the title and details to the info div
-                            episodeInfo.appendChild(title);
-                            if (episode.t && episode.t.length > MAX_TITLE_LENGTH)
-                                episodeCard.appendChild(tooltip); // Tooltip attached to card
-
-                            episodeInfo.appendChild(details);
-
-                            // Append episode info and delete icon to the card
-                            // Only add the image in the event we HAVE a thumbnail
-                            if (episode.p !== "")
-                                episodeCard.appendChild(episodeThumbnail);
-                            episodeCard.appendChild(episodeInfo);
-                            episodeCard.appendChild(completeIcon);
-                            episodeCard.appendChild(trashIcon);
-
-                            episodeListItem.appendChild(episodeCard);
-                            // Append the card to the list container
-                            if (episode.f)
-                                episodesCompleted.appendChild(episodeListItem);
-                            else
-                                episodesList.appendChild(episodeListItem);
-                            // });
+                            } catch (err) {
+                                log('warn', `There is an episode that no longer has a domain attached.`);
+                            }
                         });
                     } else {
                         const noEpisodesMsg = document.createElement('div');
@@ -228,7 +232,7 @@ function switchTab(event) {
 }
 
 // Show button to track the domain
-async function showTrackButton(domain) {
+async function showTrackButton(domain, settings) {
     const contentDiv = document.getElementById('content');
     contentDiv.textContent = ``;
 
@@ -244,7 +248,7 @@ async function showTrackButton(domain) {
     const title = document.createElement("div");
     title.classList.add("episode-warning");
     const alreadyhasPermission = await hasPermission(URL_PATTERN.replace('$d', domain));
-    if (alreadyhasPermission)
+    if (alreadyhasPermission || !settings || (settings && settings.ot != 2 && settings.os != 2 && settings.oe != 2))
         title.textContent = ``;
     else
         title.textContent = `This Extension requires permissions to read/write on this domain for the purposes of finding titles, episode/chapter numbers, and related text in the page content.`;
@@ -254,25 +258,31 @@ async function showTrackButton(domain) {
     details.classList.add("warning-details");
 
     const trackButton = document.createElement('button');
-    if (alreadyhasPermission)
+    if (alreadyhasPermission || !settings || (settings && settings.ot != 2 && settings.os != 2 && settings.oe != 2)) {
         trackButton.textContent = `Track ${domain}`;
-    else
+
+        trackButton.addEventListener('click', () => {
+            chrome.runtime.sendMessage({ action: 'trackDomain', domain: domain });
+            contentDiv.textContent = `${domain} is now being tracked. Reload to view episodes.`;
+        });
+    } else {
         trackButton.textContent = `Request Permission`;
 
-    trackButton.addEventListener('click', () => {
-        chrome.permissions.request({
-            origins: [URL_PATTERN.replace('$d', domain)]
-        }, (granted) => {
-            // The callback argument will be true if the user granted the permissions.
-            if (granted) {
-                chrome.runtime.sendMessage({ action: 'trackDomain', domain: domain });
-                contentDiv.textContent = `${domain} is now being tracked. Reload to view episodes.`;
-            } else {
-                log('log', `Domain Permissions Refused for ${domain}`);
-                contentDiv.textContent = `Domain Permissions Refused for ${domain}`;
-            }
+        trackButton.addEventListener('click', () => {
+            chrome.permissions.request({
+                origins: [URL_PATTERN.replace('$d', domain)]
+            }, (granted) => {
+                // The callback argument will be true if the user granted the permissions.
+                if (granted) {
+                    chrome.runtime.sendMessage({ action: 'trackDomain', domain: domain });
+                    contentDiv.textContent = `${domain} is now being tracked. Reload to view episodes.`;
+                } else {
+                    log('log', `Domain Permissions Refused for ${domain}`);
+                    contentDiv.textContent = `Domain Permissions Refused for ${domain}`;
+                }
+            });
         });
-    });
+    }
     details.appendChild(trackButton);
 
     episodeInfo.appendChild(details);
@@ -347,15 +357,16 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         titleElem.appendChild(spanElem);
 
         if (Domains && Domains.hasOwnProperty(currentDomain)) {
+            const settings = Domains[currentDomain];
             // Make sure we still have permissions for this domain
             const alreadyhasPermission = await hasPermission(URL_PATTERN.replace('$d', currentDomain));
-            if (alreadyhasPermission) {
+            if (alreadyhasPermission || (settings.ot != 2 && settings.os != 2 && settings.oe != 2)) {
                 const tabs = document.getElementById('tabs');
                 tabs.style.display = "block";
                 showTrackEpButton(currentDomain, currentTab.id, currentTab.url, currentTab.title);
                 displayEpisodes(currentDomain, currentTab.url);
             } else {
-                showTrackButton(currentDomain);
+                showTrackButton(currentDomain, settings);
             }
         } else {
             showTrackButton(currentDomain);
