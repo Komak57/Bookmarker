@@ -74,6 +74,7 @@ function renderDomainSettings(trackedDomains, domain, episodes, alreadyhasPermis
         if (settings.c == i) opt.selected = true;
         _mediaTypeSelect.appendChild(opt);
     }
+    _mediaTypeSelect.addEventListener('change', () => updateDomainSetting(trackedDomains, domain, 'c', parseInt(_mediaTypeSelect.value)));
     _groupMain.appendChild(_mediaTypeSelect);
 
     // ====================================
@@ -91,6 +92,7 @@ function renderDomainSettings(trackedDomains, domain, episodes, alreadyhasPermis
         if (settings.s == i) opt.selected = true;
         _sortBySelect.appendChild(opt);
     };
+    _sortBySelect.addEventListener('change', () => updateDomainSetting(trackedDomains, domain, 's', parseInt(_sortBySelect.value)));
     _groupMain.appendChild(_sortBySelect);
     _settings.appendChild(_groupMain);
 
