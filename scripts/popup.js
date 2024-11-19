@@ -308,17 +308,17 @@ function showTrackEpButton(domain, tabId, url, title) {
     });
     contentDiv.appendChild(trackButton);
 
-    const exportButton = document.createElement('i');
-    exportButton.className = 'fas fa-solid fa-file-export';
+    // const exportButton = document.createElement('i');
+    // exportButton.className = 'fas fa-solid fa-file-export';
 
-    exportButton.addEventListener('click', (event) => {
-        event.stopPropagation();
-        event.preventDefault();
-        exportAsCSV();
-        // window.location.reload(); // Force full page reload of popup.html
-        // TODO: listen for background message to reload page
-    });
-    contentDiv.appendChild(exportButton);
+    // exportButton.addEventListener('click', (event) => {
+    //     event.stopPropagation();
+    //     event.preventDefault();
+    //     exportAsCSV();
+    //     // window.location.reload(); // Force full page reload of popup.html
+    //     // TODO: listen for background message to reload page
+    // });
+    // contentDiv.appendChild(exportButton);
 
     // contentDiv.appendChild(trackButton);
     const sortButton = document.createElement('i');
