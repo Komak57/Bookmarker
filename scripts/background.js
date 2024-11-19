@@ -1,7 +1,6 @@
 // Import js in background.js
 importScripts('/scripts/utils.js');
-importScripts('/scripts/api/apiManager.js');
-
+importScripts('/scripts/api/APIManager.js');
 // Initialize APIManager as a global
 const apiManager = new APIManager(this);
 
