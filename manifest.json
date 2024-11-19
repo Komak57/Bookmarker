@@ -2,7 +2,7 @@
     "manifest_version": 3,
     "name": "Bookmarker",
     "description": "Auto-tracking of manga and anime",
-    "version": "1.4.16",
+    "version": "1.4.17",
     "permissions": [
         "tabs",
         "storage",
@@ -21,7 +21,7 @@
         "service_worker": "scripts/background.js"
     },
     "action": {
-        "default_popup": "default.html",
+        "default_popup": "popup.html",
         "default_icon": "icons/bookmarker.png"
     },
     "web_accessible_resources": [{

@@ -259,10 +259,34 @@ async function showTrackButton(domain, settings) {
 
     const trackButton = document.createElement('button');
     if (alreadyhasPermission || !settings || (settings && settings.ot != 2 && settings.os != 2 && settings.oe != 2)) {
+
+        // ====================================
+        // Add Media Type select
+        // ====================================
+        const _groupMain = document.createElement('div');
+        _groupMain.classList.add('settings-group');
+        _groupMain.classList.add('centerred');
+
+        const _mediaTypeLabel = document.createElement('label');
+        _mediaTypeLabel.textContent = "Media Type:";
+        _groupMain.appendChild(_mediaTypeLabel);
+        const _mediaTypeSelect = document.createElement('select');
+
+        for (i = 0; i < categories.length; i++) {
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.textContent = categories[i];
+            // if (settings.c == i) opt.selected = true;
+            _mediaTypeSelect.appendChild(opt);
+        }
+        _groupMain.appendChild(_mediaTypeSelect);
+        episodeInfo.appendChild(_groupMain);
+
+
         trackButton.textContent = `Track ${domain}`;
 
         trackButton.addEventListener('click', () => {
-            chrome.runtime.sendMessage({ action: 'trackDomain', domain: domain });
+            chrome.runtime.sendMessage({ action: 'trackDomain', domain: domain, category: _mediaTypeSelect.value });
             contentDiv.textContent = `${domain} is now being tracked. Reload to view episodes.`;
         });
     } else {

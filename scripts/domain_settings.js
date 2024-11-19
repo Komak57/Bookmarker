@@ -56,12 +56,12 @@ function renderDomainSettings(trackedDomains, domain, episodes, alreadyhasPermis
     const _settings = document.createElement('div');
     _settings.classList.add('domain-settings');
 
-    const _groupMain = document.createElement('div');
-    _groupMain.classList.add('settings-group');
-
     // ====================================
     // Add Media Type select
     // ====================================
+    const _groupMain = document.createElement('div');
+    _groupMain.classList.add('settings-group');
+
     const _mediaTypeLabel = document.createElement('label');
     _mediaTypeLabel.textContent = "Media Type:";
     _groupMain.appendChild(_mediaTypeLabel);

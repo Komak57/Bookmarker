@@ -97,7 +97,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     log('warn', 'Background.js onMessage Listener Loaded');
     if (request.action === 'trackDomain') {
         // sendResponse({ status: "success" });
-        trackDomain(request.domain);
+        trackDomain(request.domain, request.category);
         sendResponse({ success: true });
         return true;
     }
@@ -822,7 +822,7 @@ string d        -- Domain
     int s       -- Sort By ["Last Viewed", "Ascending", "Descending"]
     */
 // Add domain to the list of tracked domains
-async function trackDomain(domain) {
+async function trackDomain(domain, category) {
     // const Domains = getDomains();
     getDomains()
         .catch((error) => {
@@ -836,7 +836,7 @@ async function trackDomain(domain) {
 
                 Domains[domain] = {
                     i: uid,
-                    c: 0, // Default Category to "Anime"
+                    c: category, // Set Category
                     ot: 0, // 'Obtain Title From' URL
                     otm: "", // Empty Title Match String
                     os: 0, // 'Obtain Season From' URL
