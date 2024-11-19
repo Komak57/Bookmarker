@@ -351,6 +351,123 @@ function exportAsCSV() {
         });
 }
 
+function importCSV(file) {
+    return new Promise((resolve, reject) => {
+
+        getDomains()
+            .then((domains) => {
+                getEpisodes()
+                    .then((episodes) => {
+                        const reader = new FileReader();
+
+                        reader.onload = (event) => {
+                            const content = event.target.result;
+                            const lines = content.split("\n").filter(line => line.trim() !== '');
+
+                            let targetStorage = 0;
+                            let newDomains = 0;
+                            let newEpisodes = 0;
+                            const translations = {};
+
+                            lines.forEach((line, index) => {
+                                if (line == "") {
+                                    // empty spacer
+                                } else if (line == "Domains") {
+                                    // Target Domain Storage
+                                    targetStorage = 1;
+                                    log('log', 'Now parsing Domains');
+                                } else if (line == "Episodes") {
+                                    // Target Episode Storage
+                                    targetStorage = 2;
+                                    log('log', 'Now parsing Episodes');
+                                } else {
+                                    if (targetStorage == 1) {
+                                        // Expecting Domain Data
+                                        const [domain, id, cat, ot, otm, os, osm, oe, oem, ignoreEpisode, notify, sortby] = line.split("|");
+                                        // Sanity Check Data
+                                        let _id = parseInt(id);
+                                        // Only accept valid ID's
+                                        if (!isNaN(_id)) {
+                                            if (domains.hasOwnProperty(domain)) {
+                                                // log('log', `Matching Domain ${domain} (${_id} -> ${domains[domain].i})`);
+                                                if (domains[domain].i != _id) {
+                                                    // domain ID's differ, mark for translation
+                                                    translations[_id] = domains[domain].i;
+                                                    log('log', `Translation required for ${domain} (${_id} -> ${domains[domain].i})`);
+                                                }
+                                            } else {
+                                                newDomains++;
+                                                log('log', 'New Domain: ', domain);
+                                            }
+                                            domains[domain] = {
+                                                i: _id,
+                                                c: parseInt(cat),
+                                                ot: parseInt(ot),
+                                                otm: otm,
+                                                os: parseInt(os),
+                                                osm: osm,
+                                                oe: parseInt(oe),
+                                                oem: oem,
+                                                ie: (ignoreEpisode == "true" ? 1 : 0),
+                                                n: (notify == "true" ? 1 : 0),
+                                                s: parseInt(sortby)
+                                            };
+                                        }
+                                    } else if (targetStorage == 2) {
+                                        // Expecting Episode Data
+                                        const [id, cat, domain, title, episode, released, number, pic, link, finished, updated] = line.split("|");
+                                        // Sanity Check Data
+                                        let _id = parseInt(id);
+                                        if (!isNaN(_id)) {
+                                            // translate where necessary
+                                            let _domain = parseInt(domain);
+                                            if (translations.hasOwnProperty(domain))
+                                                _domain = translations[domain];
+                                            // Skip if we don't have a domain for this episode
+                                            const hasDomainTarget = Object.fromEntries(Object.entries(domains).filter(([d, settings]) => settings.i === _domain));
+                                            if (Object.keys(hasDomainTarget).length > 0) {
+
+                                                if (!episodes.hasOwnProperty(_id)) {
+                                                    newEpisodes++;
+                                                    log('log', 'New Episode: ', title);
+                                                }
+                                                episodes[_id] = {
+                                                    c: parseInt(cat),
+                                                    d: parseInt(_domain),
+                                                    f: (finished == "true" ? 1 : 0),
+                                                    t: title,
+                                                    e: episode,
+                                                    r: parseInt(released),
+                                                    n: parseInt(number),
+                                                    p: pic,
+                                                    l: link,
+                                                    u: parseInt(updated)
+                                                };
+                                            } else {
+                                                log('log', `Episode ${title}[${id}] skipped. Domain no longer exists.`);
+                                            }
+                                        } else {
+                                            // TODO: send it through the APIManager
+                                        }
+                                    }
+                                }
+                            });
+
+                            console.log(`Importing ${newDomains} new domains: `, domains);
+                            console.log(`Importing ${newEpisodes} new episodes: `, episodes);
+                            saveDomains(domains);
+                            saveEpisodes(episodes);
+                            resolve(true);
+                        };
+
+                        reader.onerror = (error) => reject(error);
+
+                        reader.readAsText(file);
+                    });
+            });
+    });
+}
+
 function downloadCSV(content, filename) {
     const blob = new Blob([content], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
