@@ -1,15 +1,13 @@
 class JIKAN_Anime extends APIClass {
     constructor() {
         super();
-        this.throttle = 'jikan';
         // 60 per minute, 2 calls per request, waits 1 second between calls
+        this.throttle = 'jikan';
         this.delay = 1000;
     }
     static {
-        APIClass.register('JIKAN Anime', this);
+        APIClass.register('JIKAN Anime', new JIKAN_Anime());
     }
-
-    // static throttle = 'jikan';
     // ====================================
     // JIKAN API - Get Anime Data
     // ====================================

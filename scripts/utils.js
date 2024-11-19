@@ -202,7 +202,7 @@ async function getEpisodes() {
                                         // Send an API Request to get additional details later...
 
                                     settings['cloud'] = true;
-                                    apiManager.request(categories[settings.c], details, { id: null, url: `https://${Domains[cloudEpisodes[id].d]}${cloudEpisodes[id].l.startsWith("/")? "":"/"}${cloudEpisodes[id].l}`, title: null }, settings);
+                                    apiManager.request(details, { id: null, url: `https://${Domains[cloudEpisodes[id].d]}${cloudEpisodes[id].l.startsWith("/")? "":"/"}${cloudEpisodes[id].l}`, title: null }, settings);
                                 }
                             });
                         }
@@ -565,8 +565,8 @@ class DataStruct {
 // ====================================
 class APIClass {
     static classes = {};
-    static throttle = 'default';
-    static delay = 0;
+    // throttle = 'default';
+    // static delay = 0;
     // constructor() {
     //     // APIClass.classes.push(this);
     //     register(this);
@@ -576,6 +576,12 @@ class APIClass {
     }
     static getAllSubclasses() {
         return this.classes;
+    }
+    getThrottle() {
+        return 'default';
+    }
+    getDelay() {
+        return 0;
     }
     async fetch(details, tab, settings) {
         log('warn', 'fetch() not implemented');

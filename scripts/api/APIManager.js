@@ -1,7 +1,7 @@
 importScripts('/scripts/api/jikan-anime.js');
 importScripts('/scripts/api/jikan-manga.js');
 importScripts('/scripts/api/default.js');
-log('log', 'APIClass Objects: ', APIClass.getAllSubclasses());
+// log('log', 'APIClass Objects: ', APIClass.getAllSubclasses());
 // ====================================
 // Rate Limit Logic
 // ====================================
@@ -51,29 +51,24 @@ class APIManager {
     constructor(parent) {
         this.parent = parent;
         // Set throttling delays for different APIs here (they can run in parallel)
-        this.queues = {
-            jikan: new ThrottledQueue(this.parent),
-            default: new ThrottledQueue(this.parent)
-        };
+        this.queues = {};
+        // Procedurally add all APIClass extended classes.
+        // for (const [key, cls] of Object.entries(APIClass.getAllSubclasses())) {
+        //     this.queues[cls.throttle] = new ThrottledQueue(this.parent);
+        // }
+        for (const [key, cls] of Object.entries(APIClass.classes)) {
+            // APIClass.getAllSubclasses().forEach((cls) => {
+            this.queues[cls.throttle] = new ThrottledQueue(this.parent);
+            // });
+        }
+        // this.queues = {
+        //     jikan: new ThrottledQueue(this.parent),
+        //     default: new ThrottledQueue(this.parent)
+        // };
     }
 
-    async request(category, details, tab, settings) {
-        let api_call = new APIClass();
-        switch (category) {
-            case 'Anime':
-                api_call = new JIKAN_Anime();
-                break;
-            case 'Manga':
-                api_call = new JIKAN_Manga();
-                break;
-            case 'Movies':
-                // Movies not supported yet. Treat as "Other"
-            case 'Other':
-                // Default is "Other"
-            default:
-                api_call = new DefaultAPI();
-                break;
-        }
+    async request(details, tab, settings) {
+        const api_call = APIClass.classes[settings.a];
         // Queue the API for a future fetch, and then send out an addEpisode message to background.js
         this.queues[api_call.throttle].enqueue(api_call, details, tab, settings);
 

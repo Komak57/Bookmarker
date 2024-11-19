@@ -266,7 +266,7 @@ async function addEpisode(domain, settings, tab) {
 async function getFromAPI(details, tab, settings) {
     try {
         // Send API Request, and await message 'addEpisode'
-        apiManager.request(categories[settings.c], details, tab, settings);
+        apiManager.request(details, tab, settings);
         // apiManager.request(categories[settings.c], details, tab, settings).then((data) => {
         //     if (!data) {
         //         log('error', `API.request returned null.`);

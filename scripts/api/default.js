@@ -6,7 +6,7 @@ class DefaultAPI extends APIClass {
     }
 
     static {
-        APIClass.register('Default', this);
+        APIClass.register('Default', new DefaultAPI());
     }
 
     // ====================================

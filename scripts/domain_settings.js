@@ -96,12 +96,33 @@ function renderDomainSettings(trackedDomains, domain, episodes, alreadyhasPermis
     _groupMain.appendChild(_sortBySelect);
     _settings.appendChild(_groupMain);
 
-    const _groupObtain = document.createElement('div');
-    _groupObtain.classList.add('settings-group');
+    // ====================================
+    // API Link Select
+    // ====================================
+    const _apiLabel = document.createElement('label');
+    _apiLabel.textContent = "Metadata API:";
+    _groupMain.appendChild(_apiLabel);
+    const _apiSelect = document.createElement('select');
+
+    // const classes = APIClass.getAllSubclasses();
+    log('log', 'Listing API Classes: ', APIClass.classes);
+    for (const [key, cls] of Object.entries(APIClass.classes)) {
+        const opt = document.createElement('option');
+        opt.value = key;
+        opt.textContent = key;
+        if (settings.a == key) opt.selected = true;
+        _apiSelect.appendChild(opt);
+    }
+    _apiSelect.addEventListener('change', () => updateDomainSetting(trackedDomains, domain, 'a', _apiSelect.value));
+    _groupMain.appendChild(_apiSelect);
+    _settings.appendChild(_groupMain);
 
     // ====================================
     // Create "Obtain Title From" dropdown
     // ====================================
+    const _groupObtain = document.createElement('div');
+    _groupObtain.classList.add('settings-group');
+
     const _groupTitlePair = document.createElement('div');
     _groupTitlePair.classList.add('settings-pair');
 
