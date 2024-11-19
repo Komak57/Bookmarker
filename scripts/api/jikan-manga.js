@@ -6,6 +6,10 @@ class JIKAN_Manga extends APIClass {
         this.delay = 1000;
     }
 
+    static {
+        APIClass.register('JIKAN Manga', this);
+    }
+
     // ====================================
     // JIKAN API - Get Manga Data
     // ====================================

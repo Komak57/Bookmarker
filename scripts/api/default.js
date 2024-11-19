@@ -5,6 +5,10 @@ class DefaultAPI extends APIClass {
         this.delay = 0;
     }
 
+    static {
+        APIClass.register('Default', this);
+    }
+
     // ====================================
     // JIKAN API - Get Manga Data
     // ====================================

@@ -564,8 +564,19 @@ class DataStruct {
 // API Class Structure
 // ====================================
 class APIClass {
+    static classes = {};
     static throttle = 'default';
     static delay = 0;
+    // constructor() {
+    //     // APIClass.classes.push(this);
+    //     register(this);
+    // }
+    static register(name, subclass) {
+        this.classes[name] = subclass;
+    }
+    static getAllSubclasses() {
+        return this.classes;
+    }
     async fetch(details, tab, settings) {
         log('warn', 'fetch() not implemented');
         return null;

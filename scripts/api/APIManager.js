@@ -1,6 +1,7 @@
 importScripts('/scripts/api/jikan-anime.js');
 importScripts('/scripts/api/jikan-manga.js');
 importScripts('/scripts/api/default.js');
+log('log', 'APIClass Objects: ', APIClass.getAllSubclasses());
 // ====================================
 // Rate Limit Logic
 // ====================================
