@@ -7,7 +7,8 @@ class JIKAN_Manga extends APIClass {
     }
 
     static {
-        APIClass.register('JIKAN Manga', new JIKAN_Manga());
+        this.alias = 'JIKAN Manga';
+        APIClass.register(this.alias, new JIKAN_Manga());
     }
 
     // ====================================

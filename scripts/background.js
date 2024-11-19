@@ -9,6 +9,7 @@ log('warn', 'Background.js Loaded');
     "anitaku.pe":{"i":001,"c":0,"ot":0,"otm":"","os":0,"osm":"","oe":0,"oem":"","ie":0,"n":1,"s":0}
     string d        -- Domain
         int i       -- Unique ID
+        int a       -- API Name Link
         int c       -- Category [ Anime, Manga, Other ]
         int ot      -- Obtain Title From ["URL", "Tab Text", "Content on Page"]
         string otm  -- String to Match Title by Content
@@ -757,6 +758,7 @@ async function addEpisodeToStorage(api_data, tab, settings) {
         if (parseInt(api_data.e) === 1 || settings.ie || settings.forced) {
             //const domainID = Domains[domain].i;
             episodes[api_data.id] = {
+                a: JIKAN_Anime.alias, // Set API to JIKAN Anime as default
                 c: settings.c, // Match Domain Filter
                 d: settings.i,
                 f: api_data.f,

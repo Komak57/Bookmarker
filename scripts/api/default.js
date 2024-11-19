@@ -1,12 +1,13 @@
-class DefaultAPI extends APIClass {
+class InternalAPI extends APIClass {
     constructor() {
         super();
-        this.throttle = 'default';
+        this.throttle = 'internal';
         this.delay = 0;
     }
 
     static {
-        APIClass.register('Default', new DefaultAPI());
+        this.alias = 'Internal';
+        APIClass.register(this.alias, new InternalAPI());
     }
 
     // ====================================
@@ -16,6 +17,7 @@ class DefaultAPI extends APIClass {
         // TODO: Get title from existing match
         const ep = new DataStruct(
             details.title, // id
+
             settings.c, // c
             settings.i, // d
             0, // f

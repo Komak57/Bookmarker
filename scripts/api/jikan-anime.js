@@ -6,7 +6,8 @@ class JIKAN_Anime extends APIClass {
         this.delay = 1000;
     }
     static {
-        APIClass.register('JIKAN Anime', new JIKAN_Anime());
+        this.alias = 'JIKAN Anime';
+        APIClass.register(this.alias, new JIKAN_Anime());
     }
     // ====================================
     // JIKAN API - Get Anime Data

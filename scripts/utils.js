@@ -188,6 +188,7 @@ async function getEpisodes() {
                                 for (let id in cloudEpisodes) {
                                     // Add temporary details immediately
                                     localEpisodes[id] = {
+                                            a: JIKAN_Anime.alias,
                                             c: cloudEpisodes[id].c,
                                             d: cloudEpisodes[id].d,
                                             f: 0,
@@ -545,8 +546,9 @@ function VersionUpdate() {
 // API Data Structure
 // ====================================
 class DataStruct {
-    constructor(id = 0, c = 0, d = 0, f = 0, t = '', e = 0, r = 0, n = null, p = '', l = 'tab.url', u = Date.now(), error = '') {
+    constructor(id = 0, a = JIKAN_Anime.alias, c = 0, d = 0, f = 0, t = '', e = 0, r = 0, n = null, p = '', l = 'tab.url', u = Date.now(), error = '') {
         this.id = id;
+        this.a = a;
         this.c = c; // Anime
         this.d = d;
         this.f = f;
@@ -567,24 +569,20 @@ class APIClass {
     static classes = {};
     // throttle = 'default';
     // static delay = 0;
-    // constructor() {
-    //     // APIClass.classes.push(this);
-    //     register(this);
-    // }
+    constructor() {
+        this.throttle = 'none';
+        this.delay = 0;
+    }
     static register(name, subclass) {
         this.classes[name] = subclass;
     }
-    static getAllSubclasses() {
-        return this.classes;
-    }
-    getThrottle() {
-        return 'default';
-    }
-    getDelay() {
-        return 0;
+    static {
+        this.alias = 'None';
+        APIClass.register(this.alias, new APIClass());
     }
     async fetch(details, tab, settings) {
-        log('warn', 'fetch() not implemented');
+        log('warn', 'APIClass "None" does not implement fetch().');
+        // throw new Error('APIClass "None" does not implement fetch().');
         return null;
     }
     levenshtein(s, t) {

@@ -36,6 +36,8 @@ class ThrottledQueue {
 
             // Update execution time
             this.lastRequest = Date.now();
+            if (!api_data)
+                return;
 
             log('log', `Processing addEpisode Request`);
             this.parent.addEpisodeToStorage(api_data, task.tab, task.settings);
