@@ -509,9 +509,38 @@ function VersionUpdate() {
                                     }
                                     saveEpisodes(episodes);
                                     log('log', `Updated all episodes to implement released episode counts Required for v1.3`);
+                                    saveVersion('1.3.0');
+                                case '1.4':
+                                    log('log', `No Changes Required for v1.4`);
+                                    saveVersion('1.4.0');
+                                case '1.5':
+                                    // Fix all episodes by moving them to domain.category (in case they were changed)
+                                    for (const id of Object.keys(episodes)) {
+                                        if (episodes[id].d == settings.i) {
+                                            episodes[id].c = settings.c; // Transfer to domain category
+                                        }
+                                    }
+                                    saveEpisodes(episodes);
+                                    // TODO: add API target from domain.category
+                                    for (const domain of Object.keys(domains)) {
+                                        switch (categories[domains[domain].c]) {
+                                            case 'Anime':
+                                                domains[domain]['a'] = JIKAN_Anime.alias;
+                                                break;
+                                            case 'Manga':
+                                                domains[domain]['a'] = JIKAN_Manga.alias;
+                                                break;
+                                            case 'Movies':
+                                            case 'Other':
+                                            default:
+                                                domains[domain]['a'] = InternalAPI.alias;
+                                        }
+                                    }
+                                    saveDomains(domains);
+
                                     // We'll update to manifestData.version anyways
                                     if (`${major}.${minor}` != `${_major}.${_minor}`)
-                                        saveVersion('1.3.0');
+                                        saveVersion('1.5.0');
                                 case `${_major}.${_minor}`:
                                     log('log', `No Further Changes Required for v${manifestData.version}`);
                                     saveVersion(manifestData.version);

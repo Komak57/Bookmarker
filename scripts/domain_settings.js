@@ -75,9 +75,13 @@ function renderDomainSettings(trackedDomains, domain, episodes, alreadyhasPermis
         _mediaTypeSelect.appendChild(opt);
     }
     _mediaTypeSelect.addEventListener('change', () => {
-        for (let id in episodes) {
-            if (episodes[id].d == settings.i)
+        // log('log', `Transferring ${Object.keys(domainEpisodes).length} Episodes to new category`);
+        for (const id of Object.keys(episodes)) {
+            // log('log', `Checking Episode[${id}].d`);
+            if (episodes[id].d == settings.i) {
+                // log('log', `Transferring Episode[${id}] to new category (${settings.i})`);
                 episodes[id].c = parseInt(_mediaTypeSelect.value); // Transfer to new category
+            }
         }
         saveEpisodes(episodes);
         updateDomainSetting(trackedDomains, domain, 'c', parseInt(_mediaTypeSelect.value))
