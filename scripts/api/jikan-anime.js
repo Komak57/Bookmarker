@@ -78,7 +78,12 @@ class JIKAN_Anime extends APIClass {
     }
 
     async fetchData(details) {
-        const url = `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(details.title)}&limit=10`;
+        // Match Title by default
+        let url = `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(details.title)}&limit=10`;
+        // Match ID if Title not provided (cloud loading)
+        if (!details.title && details.id)
+            url = `https://api.jikan.moe/v4/anime/${details.id}`;
+        // const url = `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(details.title)}&limit=10`;
         log('log', `Attempting JIKAN API: ${url}`);
 
         try {

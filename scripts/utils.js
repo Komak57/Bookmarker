@@ -188,22 +188,25 @@ async function getEpisodes() {
                                 for (let id in cloudEpisodes) {
                                     // Add temporary details immediately
                                     localEpisodes[id] = {
-                                            a: JIKAN_Anime.alias,
-                                            c: cloudEpisodes[id].c,
-                                            d: cloudEpisodes[id].d,
-                                            f: 0,
-                                            t: `Title ${id}`,
-                                            e: cloudEpisodes[id].e,
-                                            r: cloudEpisodes[id].e,
-                                            n: cloudEpisodes[id].e,
-                                            p: "",
-                                            l: cloudEpisodes[id].l,
-                                            u: Date.now()
-                                        }
-                                        // Send an API Request to get additional details later...
+                                        c: cloudEpisodes[id].c,
+                                        d: cloudEpisodes[id].d,
+                                        f: 0,
+                                        t: `Title ${id}`,
+                                        e: cloudEpisodes[id].e,
+                                        r: cloudEpisodes[id].e,
+                                        n: cloudEpisodes[id].e,
+                                        p: "",
+                                        l: cloudEpisodes[id].l,
+                                        u: Date.now()
+                                    }
 
+                                    // Send an API Request to get additional details later...
+                                    settings['a'] = cloudEpisodes[id].a;
+                                    settings['i'] = cloudEpisodes[id].d;
+                                    settings['c'] = cloudEpisodes[id].c;
                                     settings['cloud'] = true;
-                                    apiManager.request(details, { id: null, url: `https://${Domains[cloudEpisodes[id].d]}${cloudEpisodes[id].l.startsWith("/")? "":"/"}${cloudEpisodes[id].l}`, title: null }, settings);
+                                    // chrome.runtime.sendMessage({ action: 'trackBulk', domain: domain, domainEpisodes: missingEpisodes, settings: settings });
+                                    apiManager.request({ id: id, title: null, season: 1, episode: localEpisodes[id].e }, { id: null, url: `https://${Domains[cloudEpisodes[id].d]}${cloudEpisodes[id].l.startsWith("/")? "":"/"}${cloudEpisodes[id].l}`, title: null }, settings);
                                 }
                             });
                         }
@@ -227,9 +230,10 @@ function saveEpisodes(localEpisodes) {
         // Filter minimal necessary information for cloud storage
         let cloudEpisodes = {};
         for (let id in localEpisodes) {
-            // Not finished, and a category that supports recovery from cloud save data
-            if (localEpisodes[id].f == 0 && localEpisodes[id].c <= 1) {
+            // Not finished, and uses an API that supports recovery from cloud save data
+            if (localEpisodes[id].f == 0 && localEpisodes[id].a != 'Default' && localEpisodes[id].a != 'None') {
                 cloudEpisodes[id] = {
+                    a: localEpisodes[id].a,
                     c: localEpisodes[id].c,
                     d: localEpisodes[id].d,
                     e: localEpisodes[id].e,
