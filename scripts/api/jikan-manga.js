@@ -37,6 +37,7 @@ class JIKAN_Manga extends APIClass {
         log('log', `JIKAN Best match was ${retA.json.data[m].title} with a score of ${lowest}`);
         const jikan = new DataStruct(
             retA.json.data[m].mal_id, // id
+            JIKAN_Manga.alias,
             settings.c, // c
             settings.i, // d
             0, // f

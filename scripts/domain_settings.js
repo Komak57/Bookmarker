@@ -74,7 +74,14 @@ function renderDomainSettings(trackedDomains, domain, episodes, alreadyhasPermis
         if (settings.c == i) opt.selected = true;
         _mediaTypeSelect.appendChild(opt);
     }
-    _mediaTypeSelect.addEventListener('change', () => updateDomainSetting(trackedDomains, domain, 'c', parseInt(_mediaTypeSelect.value)));
+    _mediaTypeSelect.addEventListener('change', () => {
+        for (let id in episodes) {
+            if (episodes[id].d == settings.i)
+                episodes[id].c = parseInt(_mediaTypeSelect.value); // Transfer to new category
+        }
+        saveEpisodes(episodes);
+        updateDomainSetting(trackedDomains, domain, 'c', parseInt(_mediaTypeSelect.value))
+    });
     _groupMain.appendChild(_mediaTypeSelect);
 
     // ====================================

@@ -17,7 +17,7 @@ class InternalAPI extends APIClass {
         // TODO: Get title from existing match
         const ep = new DataStruct(
             details.title, // id
-
+            InternalAPI.alias,
             settings.c, // c
             settings.i, // d
             0, // f
