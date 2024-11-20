@@ -514,15 +514,15 @@ function VersionUpdate() {
                                     log('log', `No Changes Required for v1.4`);
                                     saveVersion('1.4.0');
                                 case '1.5':
-                                    // Fix all episodes by moving them to domain.category (in case they were changed)
-                                    for (const id of Object.keys(episodes)) {
-                                        if (episodes[id].d == settings.i) {
-                                            episodes[id].c = settings.c; // Transfer to domain category
-                                        }
-                                    }
                                     saveEpisodes(episodes);
                                     // TODO: add API target from domain.category
                                     for (const domain of Object.keys(domains)) {
+                                        // Fix all episodes by moving them to domain.category (in case they were changed)
+                                        for (const id of Object.keys(episodes)) {
+                                            if (episodes[id].d == domains[domain].i) {
+                                                episodes[id].c = domains[domain].c; // Transfer to domain category
+                                            }
+                                        }
                                         switch (categories[domains[domain].c]) {
                                             case 'Anime':
                                                 domains[domain]['a'] = JIKAN_Anime.alias;

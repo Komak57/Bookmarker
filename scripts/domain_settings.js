@@ -126,13 +126,21 @@ function renderDomainSettings(trackedDomains, domain, episodes, alreadyhasPermis
     }
     _apiSelect.addEventListener('change', () => {
         // TODO: remove all episodes from the domain
+        // domainEpisodes = exclusive episodes
+        const remainingEpisodes = Object.fromEntries(Object.entries(episodes).filter(([id, ep]) => ep.d != settings.i));
+        // log('warn', 'remaining: ', remainingEpisodes);
+        saveEpisodes(remainingEpisodes);
         // TODO: regenerate all removed episodes using new API to prevent ID mismatching
-        // for (let id in episodes) {
-        //     if (episodes[id].d == settings.i)
-        //         episodes[id].a = parseInt(_apiSelect.value); // Transfer to new category
-        // }
-        // saveEpisodes(episodes);
+        // details { title: 'ignored', season: 'ignored', episode: 'ignored' }
+        // tab  { id: request.id, url: request.url, title: request.title }
         updateDomainSetting(trackedDomains, domain, 'a', _apiSelect.value)
+        chrome.runtime.sendMessage({ action: 'trackBulk', domain: domain, domainEpisodes: domainEpisodes, settings: settings });
+        // for (const id of Object.keys(domainEpisodes)) {
+        //     // Fake details, fake tab, hand off settings, let it run async
+        //     apiManager.request({ title: domainEpisodes[id].t, season: (domainEpisodes[id].s ? domainEpisodes[id].s : 1), episode: domainEpisodes[id].e }, { id: null, url: `https://${domain}${domainEpisodes[id].l.startsWith("/")? "":"/"}${domainEpisodes[id].l}`, title: `${domainEpisodes[id].t} Episode ${domainEpisodes[id].e}` }, settings);
+        //     // log('warn', `apiManager.request({ title: ${domainEpisodes[id].t}, season: ${(domainEpisodes[id].s? domainEpisodes[id].s:1)}, episode: ${domainEpisodes[id].e} },  { id: null, url: \`https://${domain}${domainEpisodes[id].l.startsWith("/")? "":"/"}${domainEpisodes[id].l}\`, title: \`${domainEpisodes[id].t} Episode ${domainEpisodes[id].e}\` }, settings);`);
+        // }
+
     });
     _groupMain.appendChild(_apiSelect);
     _settings.appendChild(_groupMain);

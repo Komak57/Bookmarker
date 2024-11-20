@@ -2,7 +2,7 @@
     "manifest_version": 3,
     "name": "Bookmarker",
     "description": "Auto-tracking of manga and anime",
-    "version": "1.5.3",
+    "version": "1.5.4",
     "permissions": [
         "tabs",
         "storage",

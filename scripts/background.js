@@ -116,6 +116,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         sendResponse({ success: true });
         return true;
     }
+    if (request.action === 'trackBulk') {
+        log('log', `Bulk Episode Tracking Requested: ${request.domain}`);
+
+        for (const id of Object.keys(request.domainEpisodes)) {
+            // Fake details, fake tab, hand off settings, let it run async
+            apiManager.request({ title: request.domainEpisodes[id].t, season: (request.domainEpisodes[id].s ? request.domainEpisodes[id].s : 1), episode: request.domainEpisodes[id].e }, { id: null, url: `https://${request.domain}${request.domainEpisodes[id].l.startsWith("/")? "":"/"}${request.domainEpisodes[id].l}`, title: `${request.domainEpisodes[id].t} Episode ${request.domainEpisodes[id].e}` }, request.settings);
+            // log('warn', `apiManager.request({ title: ${domainEpisodes[id].t}, season: ${(domainEpisodes[id].s? domainEpisodes[id].s:1)}, episode: ${domainEpisodes[id].e} },  { id: null, url: \`https://${domain}${domainEpisodes[id].l.startsWith("/")? "":"/"}${domainEpisodes[id].l}\`, title: \`${domainEpisodes[id].t} Episode ${domainEpisodes[id].e}\` }, settings);`);
+        }
+    }
     // switch (request.action) {
     //     case 'trackDomain':
     //         {
