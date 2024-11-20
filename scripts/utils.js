@@ -546,9 +546,8 @@ function VersionUpdate() {
 // API Data Structure
 // ====================================
 class DataStruct {
-    constructor(id = 0, a = JIKAN_Anime.alias, c = 0, d = 0, f = 0, t = '', e = 0, r = 0, n = null, p = '', l = 'tab.url', u = Date.now(), error = '') {
+    constructor(id = 0, c = 0, d = 0, f = 0, t = '', e = 0, r = 0, n = null, p = '', l = 'tab.url', u = Date.now(), error = '') {
         this.id = id;
-        this.a = a;
         this.c = c; // Anime
         this.d = d;
         this.f = f;

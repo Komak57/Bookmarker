@@ -758,7 +758,6 @@ async function addEpisodeToStorage(api_data, tab, settings) {
         if (parseInt(api_data.e) === 1 || settings.ie || settings.forced) {
             //const domainID = Domains[domain].i;
             episodes[api_data.id] = {
-                a: JIKAN_Anime.alias, // Set API to JIKAN Anime as default
                 c: settings.c, // Match Domain Filter
                 d: settings.i,
                 f: api_data.f,
@@ -837,6 +836,7 @@ async function trackDomain(domain, category) {
 
                 Domains[domain] = {
                     i: uid,
+                    a: JIKAN_Anime.alias, // Default to our JIKAN Anime for metadata
                     c: category, // Set Category
                     ot: 0, // 'Obtain Title From' URL
                     otm: "", // Empty Title Match String

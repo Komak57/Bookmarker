@@ -37,7 +37,6 @@ class JIKAN_Anime extends APIClass {
         log('log', `JIKAN Found ${retEp.json.data.length} episodes for ${retA.json.data[m].mal_id}`);
         const jikan = new DataStruct(
             retA.json.data[m].mal_id, // id
-            JIKAN_Anime.alias,
             settings.c, // c
             settings.i, // d
             0, // f

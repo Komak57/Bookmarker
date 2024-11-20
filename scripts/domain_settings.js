@@ -120,7 +120,16 @@ function renderDomainSettings(trackedDomains, domain, episodes, alreadyhasPermis
         if (settings.a == key) opt.selected = true;
         _apiSelect.appendChild(opt);
     }
-    _apiSelect.addEventListener('change', () => updateDomainSetting(trackedDomains, domain, 'a', _apiSelect.value));
+    _apiSelect.addEventListener('change', () => {
+        // TODO: remove all episodes from the domain
+        // TODO: regenerate all removed episodes using new API to prevent ID mismatching
+        // for (let id in episodes) {
+        //     if (episodes[id].d == settings.i)
+        //         episodes[id].a = parseInt(_apiSelect.value); // Transfer to new category
+        // }
+        // saveEpisodes(episodes);
+        updateDomainSetting(trackedDomains, domain, 'a', _apiSelect.value)
+    });
     _groupMain.appendChild(_apiSelect);
     _settings.appendChild(_groupMain);
 
