@@ -329,11 +329,11 @@ function exportAsCSV() {
                         return;
                     }
                     // Generate Header
-                    csvContent = "\nDomains\nDomain|ID|Cat|ObtainTitleFrom|TitleMatch|ObtainSeasonFrom|SeasonMatch|ObtainEpisodeFrom|EpisodeMatch|IgnoreEpisode|Notify|SortBy\n";
+                    csvContent = "\nDomains\nDomain|ID|API|Cat|ObtainTitleFrom|TitleMatch|ObtainSeasonFrom|SeasonMatch|ObtainEpisodeFrom|EpisodeMatch|IgnoreEpisode|Notify|SortBy\n";
 
                     // Process Domains
                     for (const [domain, settings] of Object.entries(domains)) {
-                        const row = `${domain}|${settings.i || 'null'}|${settings.c || '0'}|${settings.ot || '0'}|${settings.otm || ''}|${settings.os || '0'}|${settings.osm || ''}|${settings.oe || '0'}|${settings.oem || ''}|${settings.ie || 'false'}|${settings.n || 'true'}|${settings.s || '0'}`; // Customize fields
+                        const row = `${domain}|${settings.i || 'null'}|${settings.a || 'Default'}|${settings.c || '0'}|${settings.ot || '0'}|${settings.otm || ''}|${settings.os || '0'}|${settings.osm || ''}|${settings.oe || '0'}|${settings.oem || ''}|${settings.ie || 'false'}|${settings.n || 'true'}|${settings.s || '0'}`; // Customize fields
                         csvContent += row + "\n";
                     }
 
@@ -384,7 +384,7 @@ function importCSV(file) {
                                 } else {
                                     if (targetStorage == 1) {
                                         // Expecting Domain Data
-                                        const [domain, id, cat, ot, otm, os, osm, oe, oem, ignoreEpisode, notify, sortby] = line.split("|");
+                                        const [domain, id, api, cat, ot, otm, os, osm, oe, oem, ignoreEpisode, notify, sortby] = line.split("|");
                                         // Sanity Check Data
                                         let _id = parseInt(id);
                                         // Only accept valid ID's
@@ -402,6 +402,7 @@ function importCSV(file) {
                                             }
                                             domains[domain] = {
                                                 i: _id,
+                                                a: api,
                                                 c: parseInt(cat),
                                                 ot: parseInt(ot),
                                                 otm: otm,
