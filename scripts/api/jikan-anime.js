@@ -23,10 +23,14 @@ class JIKAN_Anime extends APIClass {
         let m = 0;
         // Cycle all 10 results for a best match
         for (let i = 0; i < retA.json.data.length; i++) {
-            const score = this.levenshtein(details.title.toLowerCase(), retA.json.data[i].title.toLowerCase());
-            if (score < lowest) {
-                lowest = score;
-                m = i;
+            const titles = retA.json.data[i].titles;
+            // match to all titles
+            for (let j = 0; j < titles.length; j++) {
+                const score = this.levenshtein(details.title.toLowerCase(), titles[j].title.toLowerCase());
+                if (score < lowest) {
+                    lowest = score;
+                    m = i;
+                }
             }
         }
         log('log', `JIKAN ${retA.json.data.length} series. `, retA.json.data);

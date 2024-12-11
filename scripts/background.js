@@ -693,14 +693,14 @@ async function addEpisodeToStorage(api_data, tab, settings) {
             episodes[api_data.id].n = api_data.n;
             episodes[api_data.id].p = api_data.p;
             log('log', `Cloud Episode updated: ${api_data.id}.`);
-        } else if (api_data.e <= episodes[api_data.id].e) {
+        } else if (toEpisodeValue(api_data.e) <= toEpisodeValue(episodes[api_data.id].e)) {
             episodes[api_data.id].d = settings.i; // we're changing URL, so we need to change the domain it links to as well
             episodes[api_data.id].l = new URL(tab.url).pathname; // update URL
             episodes[api_data.id].r = api_data.r;
             episodes[api_data.id].n = api_data.n;
             episodes[api_data.id].p = api_data.p;
-            log('log', `Episode already watched: ${api_data.id}.`);
-        } else if (isEpisodeSequential(api_data.e.toString(), episodes[api_data.id].e.toString()) || settings.forced) {
+            log('log', `Episode already watched: ${api_data.id} is on E${episodes[api_data.id].e}. You watched E${api_data.e}.`);
+        } else if (isEpisodeSequential(api_data.e, episodes[api_data.id].e) || settings.forced) {
             // Update the episode if it is sequential
             episodes[api_data.id].d = settings.i; // we're changing URL, so we need to change the domain it links to as well
             episodes[api_data.id].l = new URL(tab.url).pathname; // update URL

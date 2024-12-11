@@ -2,11 +2,12 @@
 const yearRegex = /[^a-z0-9]\b([12][90][0-9][0-9])\b[^a-z0-9]/i;
 const seasonRegex_Rigid = /(?:(?:season|s)(\d+)|(\d+)[- ]?(?:th|rd|nd|st)?[- ]?(season|s))/i;
 //const seasonRegex_Soft = /(?:[^\d]|^)(\d+)[- ]?(?:th|nd|st)?[- ]?season(?:[^\d]|$)/i;
-const episodeRegex_Rigid = /(?:episode|ep|e|part|chapter|ch)?[- ]?(\d+(?:[a-z.]?(?:\d+)?)?)$/i;
-const episodeRegex_Simple = /(?:episode|ep|e|part|chapter|ch)[- ]?(\d+(?:[a-z.]?(?:\d+)?)?)\b/i;
-const episodeRegex_Soft = /\b(\d+(?:[a-z.]?\d+)?)\b/i;
+const episodeRegex_Rigid = /(?:episode|ep|e|part|chapter|ch)?[- ]?(\d+(?:[a-z.-_]?(?:\d+)?)?)$/i;
+const episodeRegex_Simple = /(?:episode|ep|e|part|chapter|ch)[- ]?(\d+(?:[a-z.-_]?(?:\d+)?)?)\b/i;
+const episodeRegex_Soft = /\b(\d+(?:[a-z.-_]?\d+)?)\b/i;
 const subRegex = /^(?:[^.]+\.)?([^.]+\.[^/]+.*$)/i;
 const URL_PATTERN = 'https://*.$d/*';
+const sfxRegex = /(\d+)([a-z]|[.-_](\d+))?/i;
 
 // options.js
 const fromOptions = ["URL", "Tab Text", "Content on Page"];
@@ -289,10 +290,38 @@ function normalizeUrl(url) {
     return url.trim().toLowerCase(); // Normalize URL
 }
 
+function toEpisodeValue(episode) {
+    const match = String(episode).match(sfxRegex);
+
+    if (match)
+        log('log', `toEpisodeValue: ${episode} matches[${match.length}]`);
+    else
+        log('log', `toEpisodeValue: ${episode} matches[null]`);
+
+    const ep = parseInt(match[1]);
+    let sfx = match[2];
+    if (match[3])
+        sfx = parseInt(match[3]);
+
+    if (sfx) {
+        // We have a sfx
+        if (match[3]) {
+            // suffix is numerical
+            log('log', `toEpisodeValue: ${episode} -> ${(ep + Math.pow(10, String(sfx).length))}`);
+            return ep + Math.pow(10, String(sfx).length);
+        }
+        // suffix is alphabetical
+        log('log', `toEpisodeValue: ${episode} -> ${(ep + Math.pow(10, String(sfx.charCodeAt(0)).length))}`);
+        return ep + Math.pow(10, String(sfx.charCodeAt(0)).length);
+    } else {
+        // We didn't have a suffix
+        log('log', `toEpisodeValue: ${episode} -> ${(ep)}`);
+        return ep;
+    }
+}
 // Function to determine if the episode is 1 incremented from previous
 // Also allows for alpha "parts" as well as decimal "parts"
 function isEpisodeSequential(newEpisode, savedEpisode) {
-    const sfxRegex = /(\d+)([a-z]|[.](\d+))/i;
     // log('log', `isEpisodeSequential: ${savedEpisode}->${newEpisode}`);
     const newEpisode_match = String(newEpisode).match(sfxRegex);
     const savedEpisode_match = String(savedEpisode).match(sfxRegex);
