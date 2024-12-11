@@ -292,8 +292,10 @@ function normalizeUrl(url) {
 // Function to determine if the episode is 1 incremented from previous
 // Also allows for alpha "parts" as well as decimal "parts"
 function isEpisodeSequential(newEpisode, savedEpisode) {
-    const newEpisode_match = String(newEpisode).match(/(\d+)([a-z]?|[.](\d+))$/);
-    const savedEpisode_match = String(savedEpisode).match(/(\d+)([a-z]?|[.](\d+))$/);
+    const sfxRegex = /(\d+)([a-z]|[.](\d+))/i;
+    // log('log', `isEpisodeSequential: ${savedEpisode}->${newEpisode}`);
+    const newEpisode_match = String(newEpisode).match(sfxRegex);
+    const savedEpisode_match = String(savedEpisode).match(sfxRegex);
 
     const newEpisode_ep = parseInt(newEpisode_match[1]);
     let newEpisode_sfx = newEpisode_match[2];
