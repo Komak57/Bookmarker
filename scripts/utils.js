@@ -307,20 +307,31 @@ function isEpisodeSequential(newEpisode, savedEpisode) {
     if (savedEpisode_match[3])
         savedEpisode_sfx = parseInt(savedEpisode_match[3]);
 
+    // log('log', `${savedEpisode} -> ${newEpisode} || ${newEpisode? 'has SFX': ''} ${savedEpisode_sfx? 'had SFX': ''} ${(newEpisode_ep == savedEpisode_ep + 1)? 'seq ep': 'nonseq ep'} ${(newEpisode_ep == savedEpisode_ep + 1)? 'seq numeric sfx':'nonseq numeric sfx' } ${(newEpisode_sfx.charCodeAt(0) == savedEpisode_sfx.charCodeAt(0))? 'seq alpha sfx':'nonseq alpha sfx'} `);
     // If we had a suffix...
     if (savedEpisode_sfx) {
         // But now we don't...
-        if (!newEpisode_sfx)
+        if (!newEpisode_sfx) {
+            // log('log', `had sfx, retun isSeq_Ep`);
             return newEpisode_ep == savedEpisode_ep + 1; // Only allow if we incremented the episode
-        if (newEpisode_match[3])
+        }
+        if (newEpisode_match[3]) {
+            // log('log', `has num_sfx, retun isSeq_sfx`);
             return newEpisode_sfx == savedEpisode_sfx + 1; // If working with decimal parts, allow in seq
+        }
+        // episode has increased, We had a suffix, and still have one, suffix must reset
+        if (newEpisode_ep == savedEpisode_ep + 1) {
+            // log('log', `has alpha_sfx, isSeq_ep(true), retun isSfx_new`);
+            return newEpisode_sfx == 1 || newEpisode_sfx.toLowerCase() == "a";
+        }
+        // log('log', `has alpha_sfx, retun isSeq_sfx(${newEpisode_sfx.charCodeAt(0)} == ${savedEpisode_sfx.charCodeAt(0)}+1 is ${newEpisode_sfx.charCodeAt(0) == savedEpisode_sfx.charCodeAt(0)+1})`);
         // else, only allow sequential letters
-        return newEpisode_sfx.charCodeAt(0) == savedEpisode_sfx.charCodeAt(0);
+        return newEpisode_sfx.charCodeAt(0) == savedEpisode_sfx.charCodeAt(0) + 1;
     } else {
         // We didn't have a suffix
         // But now we do...
         if (newEpisode_sfx)
-            return newEpisode_sfx == 1 || newEpisode_sfx == "a"; // Only allow first-increment
+            return newEpisode_sfx == 1 || newEpisode_sfx.toLowerCase() == "a"; // Only allow first-increment
         return newEpisode_ep == savedEpisode_ep + 1;
     }
 }
